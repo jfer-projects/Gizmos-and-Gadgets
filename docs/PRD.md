@@ -4,9 +4,9 @@
 
 | | |
 |---|---|
-| Status | Draft v0.1 for owner review |
+| Status | Draft v0.2 — owner decisions applied (ages 9–11, publish eventually, gear-ratio core) |
 | Platforms | iOS + Android phones and tablets (Godot 4 recommended) |
-| Audience | Children 7–12 (primary), parents/caregivers and teachers (secondary), nostalgic adults (tertiary) |
+| Audience | Children 9–11 (primary; Apple Kids age band 9–11, NGSS grades 4–5), parents/caregivers and teachers (secondary), nostalgic adults (tertiary) |
 | Date | 2026-09-29 |
 
 ---
@@ -42,6 +42,11 @@ Map content to NGSS grades 3–5: **3-PS2-1** (balanced/unbalanced forces), **3-
 - **Implication:** the safest and simplest path is *no ads, no third-party analytics SDKs, no accounts, no chat, on-device saves*.
 
 ---
+
+## 1.5 Owner decisions (v0.2)
+1. **Publish eventually** → all P1 items (kids-store compliance, parent zone, accessibility) are in scope, not optional.
+2. **Core fun = choosing the right gears to win, and learning from losses.** Gear ratios are the central build decision; a loss must always explain *why* (see FR-22a/22b).
+3. **Target ages 9–11** → numbers (teeth counts, ratios) are shown by default, not hidden; reading level ~grade 4; tone avoids being babyish.
 
 ## 2. Vision, goals, non-goals
 
@@ -124,7 +129,11 @@ Priority: **P0** = must for M1 (personal playable), **P1** = must for public rel
 ### 5.5 Racing
 - FR-20 (P0) 2D side-view physics race against an AI rival on a course with hills, gaps, wind, or mud depending on family.
 - FR-21 (P0) Race is deterministic given the same build (fair, learnable); no player steering required except optional boost/brake or single-button control depending on vehicle.
+- FR-20a (P0) **Gear-ratio drivetrain is the central build decision.** Player picks gears (teeth counts) for the drivetrain; ratio trades torque vs. top speed. Courses reward different ratios (steep hills → high torque; long flats → high speed; mixed → multi-gear/transmission in later races).
+- FR-20b (P0) Live "gear ratio" readout in the Garage (e.g., 24:8 = 3:1) with a simple torque/speed bar; numbers visible by default for ages 9–11.
 - FR-22 (P0) Results screen: placement, stars (1–3), and a "what helped / what slowed you" explanation tied to parts.
+- FR-22a (P0) **"Why did I lose?" replay:** after a loss, a short replay with annotated moments (e.g., "stalled on the hill: ratio too low for the slope", "topped out at 40 km/h on the flat"), naming the exact part/setting responsible.
+- FR-22b (P0) Loss framing: no failure jingle or shaming; close losses shown as "0.8 s behind"; a suggested tweak is offered but the player chooses.
 - FR-23 (P0) One-tap "Tweak & retry" returns to Garage with build preserved.
 - FR-24 (P1) Rubber-banding is disabled; rival strength scales by race number.
 
@@ -237,11 +246,11 @@ Recommended for v1: free demo (first zone + 2 races) + single full-game unlock, 
 ---
 
 ## 12. Open questions for the owner
-1. Is this **personal-only** for now, or do you plan to publish? (Changes how much of §5.7–5.9 and §6 we build.)
+1. ~~Personal-only or publish?~~ **Decided: publish eventually.** (Changes how much of §5.7–5.9 and §6 we build.)
 2. Preferred **engine/stack** (Godot recommended) and your coding comfort.
 3. Preferred **art style** (A/B/C) and budget for art/audio.
-4. Target **age band** (7–9 vs. 9–12) and **school/classroom** ambitions.
-5. Which parts of the original did you love most? (Your memory of the *feel* guides mechanics; it does not need to be copied.)
+4. ~~Target age band~~ **Decided: 9–11.** Still open: **school/classroom** ambitions.
+5. ~~Which parts did you love most?~~ **Answered:** working out the right gears to win the race, and the (productive) frustration of losing. (Your memory of the *feel* guides mechanics; it does not need to be copied.)
 6. Monetization preference (premium recommended).
 
 ## 13. Sources
