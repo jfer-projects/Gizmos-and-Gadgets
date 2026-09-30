@@ -101,16 +101,11 @@ func _update() -> void:
 
 
 func expected() -> String:
-	var s := ""
-	for d in _digits:
-		s += str(d)
-	return s
+	return "".join(_digits.map(str))
 
 
 func _check() -> void:
 	if _typed == expected():
 		main.go("parent")
 	else:
-		_typed = ""
-		_new_code()
-		main.go("gate")
+		main.go("gate")  # a fresh screen makes a fresh code

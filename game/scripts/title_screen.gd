@@ -40,7 +40,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if TT.motion:
 		_t += delta
-	queue_redraw()
+		queue_redraw()
 
 
 func _draw() -> void:

@@ -39,7 +39,7 @@ Do these on one small Android phone (about 5 inch), one large phone, one iPhone,
 
 **Kids and safety**
 - [ ] The Parent gate cannot be passed by a nine-year-old who has not been told how.
-- [ ] Confirm the installed app requests no permissions and makes no network calls (check with the device's privacy report or a network monitor).
+- [ ] Confirm the installed app requests only the vibrate permission and makes no network calls (check with the device's privacy report or a network monitor).
 
 ## Playtest with children (see `ROADMAP.md`)
 

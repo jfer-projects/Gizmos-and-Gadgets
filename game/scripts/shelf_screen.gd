@@ -43,7 +43,6 @@ func _ready() -> void:
 		b.custom_minimum_size = Vector2(0, 76)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		var reward: Dictionary = p["reward"]
 		b.text = "%s\n%s" % [p["title"], ("Found %s" % Puzzles.reward_text(p)) if done else "Crate %d: tap to open" % (i + 1)]
 		b.pressed.connect(func():
 			main.puzzle_id = p["id"]

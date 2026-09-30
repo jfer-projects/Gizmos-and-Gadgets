@@ -23,6 +23,8 @@ const STICK_R := 60.0
 var main
 var room: int = 0
 var _floor := Rect2()
+var _crate_cache: Array = []
+var _crate_floor := Rect2()
 var _player := Vector2.ZERO
 var _target = null              # Vector2 to walk to, or null
 var _target_crate: String = ""  # puzzle id to open on arrival
@@ -76,7 +78,7 @@ func _build_hud() -> void:
 	var back := TT.button("<")
 	back.pressed.connect(_leave)
 	bar.add_child(back)
-	for i in Rooms.room_count():
+	for i in Rooms.ROOMS.size():
 		var b := TT.button(Rooms.ROOMS[i]["name"], "primary" if i == room else "plain", 16)
 		b.pressed.connect(func(): _go_room(i))
 		bar.add_child(b)
@@ -122,7 +124,15 @@ func _leave() -> void:
 
 # --- world -------------------------------------------------------------------
 
+## The room's crates, rebuilt only when the floor changes size.
 func _crates() -> Array:
+	if _crate_cache.is_empty() or _crate_floor != _floor:
+		_crate_cache = _build_crates()
+		_crate_floor = _floor
+	return _crate_cache
+
+
+func _build_crates() -> Array:
 	var out: Array = []
 	var ids := Rooms.puzzles_in(room)
 	var spots: Array = Rooms.ROOMS[room]["spots"]
@@ -243,7 +253,9 @@ func _process(delta: float) -> void:
 	var near := _nearest_crate()
 	_open_button.visible = not near.is_empty()
 	if not near.is_empty():
-		_open_button.text = "Open crate" if not (main.save.is_solved(near["id"]) or main.carried.has(near["id"])) else "Look again"
+		var label := "Open crate" if not (main.save.is_solved(near["id"]) or main.carried.has(near["id"])) else "Look again"
+		if _open_button.text != label:
+			_open_button.text = label
 	if _whistle_button != null:
 		_whistle_button.disabled = _whistle_cooldown > 0.0
 	if _drop_rect().grow(6).has_point(_player) and not main.carried.is_empty():
@@ -264,8 +276,7 @@ func _move_player(delta: float) -> void:
 	elif v == Vector2.ZERO and _target != null:
 		var to: Vector2 = _target - _player
 		if _target_crate != "":
-			var crate_center := _target as Vector2
-			if crate_center.distance_to(_player) < REACH - 4.0:
+			if (_target as Vector2).distance_to(_player) < REACH - 4.0:
 				var id := _target_crate
 				_target = null
 				_target_crate = ""
@@ -389,13 +400,8 @@ func _draw() -> void:
 		draw_string(f, r.position + Vector2(16, 27), _toast, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, TT.INK)
 
 
-func _crate_colour(id: String) -> Color:
-	match Puzzles.by_id(id)["kind"]:
-		"circuit", "energy", "magnet":
-			return TT.TEAL
-		"balance":
-			return TT.BLUE
-	return TT.BRAND
+func _crate_colour() -> Color:
+	return TT.family_colors(Rooms.ROOMS[room]["family"])["fill"]
 
 
 func _draw_crate(c: Dictionary) -> void:
@@ -403,7 +409,7 @@ func _draw_crate(c: Dictionary) -> void:
 	var id: String = c["id"]
 	var solved: bool = main.save.is_solved(id)
 	var carried: bool = main.carried.has(id)
-	var fill := TT.SUNKEN if solved else _crate_colour(id)
+	var fill := TT.SUNKEN if solved else _crate_colour()
 	draw_rect(Rect2(r.position + Vector2(0, 4), r.size), TT.SHADOW)
 	draw_rect(r, fill)
 	draw_rect(r, TT.INK, false, 3.0)

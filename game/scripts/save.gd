@@ -59,6 +59,18 @@ func missing_parts(family: String) -> Array:
 	return out
 
 
+## Concept ids the child has met, in the order the concepts are defined.
+func learned_concepts() -> Array:
+	var out: Array = []
+	for id in Puzzles.CONCEPTS:
+		for pid in solved:
+			var p := Puzzles.by_id(pid)
+			if not p.is_empty() and p["concept"] == id:
+				out.append(id)
+				break
+	return out
+
+
 func is_solved(id: String) -> bool:
 	return solved.has(id)
 

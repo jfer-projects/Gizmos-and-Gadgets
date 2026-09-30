@@ -66,9 +66,7 @@ func _ready() -> void:
 		erase.add_child(ask)
 		var yes := TT.button("Yes, erase", "plain")
 		yes.pressed.connect(func():
-			main.save.reset_progress()
-			main.motor_teeth = 16
-			main.wheel_teeth = 16
+			main.reset_progress()
 			_confirm_erase = false
 			main.go("settings"))
 		erase.add_child(yes)
@@ -96,4 +94,3 @@ func _rebuild() -> void:
 	for c in get_children():
 		c.queue_free()
 	_ready()
-	queue_redraw()

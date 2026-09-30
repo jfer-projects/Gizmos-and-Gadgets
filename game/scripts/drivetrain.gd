@@ -39,6 +39,13 @@ static func _s(kind: String, length: float, place: String, extra: Dictionary = {
 	return d
 
 
+## An air segment: no rolling resistance, thinner air, and a stall speed.
+static func _air(length: float, place: String, extra: Dictionary = {}) -> Dictionary:
+	var d := {"roll": 0.0, "drag": 0.5, "stall": 12.0}
+	d.merge(extra, true)
+	return _s("air", length, place, d)
+
+
 static func _build_courses() -> Array:
 	return [
 		# ---- Ground -------------------------------------------------------
@@ -76,19 +83,19 @@ static func _build_courses() -> Array:
 		# ---- Air ----------------------------------------------------------
 		{"id": "runway", "family": "air", "name": "Runway Dash", "rival": 2.55, "drag": 1.0,
 			"blurb": "Reach take-off speed before the runway ends.",
-			"segments": [_s("runway", 200, "on the runway", {"takeoff": 17.0}), _s("air", 500, "in the air", {"roll": 0.0, "drag": 0.5, "stall": 12.0})]},
+			"segments": [_s("runway", 200, "on the runway", {"takeoff": 17.0}), _air(500, "in the air")]},
 		{"id": "short", "family": "air", "name": "Short Field", "rival": 2.5, "drag": 1.0,
 			"blurb": "A short runway. You need to speed up fast.",
-			"segments": [_s("runway", 120, "on the runway", {"takeoff": 17.0}), _s("air", 450, "in the air", {"roll": 0.0, "drag": 0.5, "stall": 12.0})]},
+			"segments": [_s("runway", 120, "on the runway", {"takeoff": 17.0}), _air(450, "in the air")]},
 		{"id": "headwind", "family": "air", "name": "Headwind Hop", "rival": 3.65, "drag": 1.0,
 			"blurb": "A strong wind blows against you in the air.",
-			"segments": [_s("runway", 220, "on the runway", {"takeoff": 18.0}), _s("air", 600, "in the air", {"roll": 0.0, "drag": 0.5, "wind": -40.0, "stall": 12.0})]},
+			"segments": [_s("runway", 220, "on the runway", {"takeoff": 18.0}), _air(600, "in the air", {"wind": -40.0})]},
 		{"id": "canyon", "family": "air", "name": "Canyon Run", "rival": 2.65, "drag": 1.0,
 			"blurb": "Gusts push you around between the canyon walls.",
-			"segments": [_s("runway", 200, "on the runway", {"takeoff": 17.0}), _s("air", 250, "in the tail gust", {"roll": 0.0, "drag": 0.5, "wind": 40.0, "stall": 12.0}), _s("air", 250, "in the crosswind", {"roll": 0.0, "drag": 1.4, "stall": 12.0})]},
+			"segments": [_s("runway", 200, "on the runway", {"takeoff": 17.0}), _air(250, "in the tail gust", {"wind": 40.0}), _air(250, "in the crosswind", {"drag": 1.4})]},
 		{"id": "grand", "family": "air", "name": "Grand Air Race", "rival": 3.05, "drag": 1.0,
 			"blurb": "A short runway, a headwind and a long final leg.",
-			"segments": [_s("runway", 150, "on the runway", {"takeoff": 18.0}), _s("air", 250, "in the headwind", {"roll": 0.0, "drag": 0.5, "wind": -35.0, "stall": 12.0}), _s("air", 350, "on the final leg", {"roll": 0.0, "drag": 0.5, "stall": 12.0})]},
+			"segments": [_s("runway", 150, "on the runway", {"takeoff": 18.0}), _air(250, "in the headwind", {"wind": -35.0}), _air(350, "on the final leg")]},
 	]
 
 static var _best_cache: Dictionary = {}

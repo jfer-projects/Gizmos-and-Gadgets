@@ -88,9 +88,27 @@ func ratio() -> float:
 	return Drivetrain.ratio_of(motor_teeth, wheel_teeth)
 
 
+## True when crates are opened by walking to them (not from the list).
+func walking() -> bool:
+	return workshop_mode == "walk" and save.settings["walk"]
+
+
+## Where a crate puzzle goes back to.
+func puzzle_exit() -> String:
+	return "workshop" if walking() else "shelf"
+
+
+## Erase progress and put the build back to the starting gears.
+func reset_progress() -> void:
+	save.reset_progress()
+	motor_teeth = save.last_motor
+	wheel_teeth = save.last_wheel
+	carried = []
+
+
 ## A solved crate's find: carried in the walking workshop, kept at once in the list.
 func collect(id: String) -> void:
-	if workshop_mode == "walk" and save.settings["walk"]:
+	if walking():
 		if not carried.has(id) and not save.is_solved(id):
 			carried.append(id)
 	else:

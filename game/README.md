@@ -24,7 +24,7 @@ Ready-made unsigned builds for Windows, macOS, Linux and the web come from `.git
 | Parent zone | Behind a gate that asks for three digits written as words. Shows time played, courses, stars, what was learned with standards codes, and a privacy note. |
 | Settings | Day, Night Shift and High Contrast themes; sound, music, vibration; read aloud; large text; reduced motion; pests on or off; walk or list workshop; erase progress. |
 
-Progress and settings are saved on the device in `user://tinker_track_save.json`. The game uses no network, no permissions, no ads and no accounts.
+Progress and settings are saved on the device in `user://tinker_track_save.json`. The game uses no network, no ads and no accounts, and asks for no permission except vibration on Android.
 
 ## The courses
 

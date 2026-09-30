@@ -16,7 +16,7 @@ The game saves your child's progress on the device: which crates are solved, sta
 
 ## Permissions
 
-The game asks for no permissions. It does not use the internet, camera, microphone, contacts, photos or location. It may vibrate the device for feedback; this can be switched off in Settings.
+The game asks for one permission on Android: to vibrate the device for feedback, which can be switched off in Settings. It does not use the internet, camera, microphone, contacts, photos or location.
 
 ## Reading aloud
 

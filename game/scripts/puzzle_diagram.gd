@@ -6,7 +6,7 @@ extends Control
 const TT = preload("res://scripts/tt.gd")
 const Puzzles = preload("res://scripts/puzzles.gd")
 
-const NONE := -999
+const NONE := Puzzles.NONE
 
 var puzzle: Dictionary
 var choice: int = NONE
@@ -14,6 +14,8 @@ var reveal := false
 
 var _t := 0.0    # clock for spinning things
 var _rt := 0.0   # 0 to 1 after reveal, for things that move once
+var _last_choice := NONE - 1  # so a still picture redraws once when the choice or reveal changes
+var _last_reveal := false
 var _k := 1.0    # drawing scale, so wide pictures still fit when the answer panel opens
 var _vs := Vector2.ZERO  # the drawing space size (the control size divided by _k)
 
@@ -22,7 +24,12 @@ func _process(delta: float) -> void:
 	if TT.motion or reveal:
 		_t += delta
 	_rt = minf(_rt + delta / 1.2, 1.0) if reveal else 0.0
-	queue_redraw()
+	# a still picture (reduced motion, nothing revealed) needs no redrawing
+	var changed := choice != _last_choice or reveal != _last_reveal
+	_last_choice = choice
+	_last_reveal = reveal
+	if TT.motion or reveal or changed:
+		queue_redraw()
 
 
 func _draw() -> void:
@@ -222,7 +229,7 @@ func _draw_energy() -> void:
 			draw_colored_polygon(PackedVector2Array([base + Vector2(-50, 0), base + Vector2(50, 0), base + Vector2(36, -42), base + Vector2(-36, -42)]), TT.TEAL if power > 0.0 else TT.MUTED)
 			draw_polyline(PackedVector2Array([base + Vector2(-50, 0), base + Vector2(50, 0), base + Vector2(36, -42), base + Vector2(-36, -42), base + Vector2(-50, 0)]), TT.INK, 2.5)
 			for k in range(1, 4):
-				draw_line(base + Vector2(-50 + k * 25.0, 0) + Vector2(0, 0), base + Vector2(-36 + k * 18.0, -42), TT.ON_TEAL, 1.5)
+				draw_line(base + Vector2(-50 + k * 25.0, 0), base + Vector2(-36 + k * 18.0, -42), TT.ON_TEAL, 1.5)
 		1:
 			draw_line(base, base + Vector2(0, -80), Color("#F4EFD0") if night else TT.INK, 5.0)
 			var hub := base + Vector2(0, -80)

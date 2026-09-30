@@ -44,7 +44,7 @@ func _ready() -> void:
 	stats.add_child(_stat("Crates solved", "%d / %d" % [main.save.solved.size(), Puzzles.count()]))
 
 	col.add_child(TT.label("What your child has learned", 18, TT.INK, true))
-	var learned := _learned()
+	var learned: Array = main.save.learned_concepts()
 	if learned.is_empty():
 		col.add_child(_para("Nothing yet. Each crate teaches one idea and shows up here."))
 	for id in learned:
@@ -95,14 +95,3 @@ func _stars() -> int:
 	for c in Drivetrain.COURSES:
 		n += main.save.stars_for(c["id"])
 	return n
-
-
-## Concept ids in the order they are defined, for concepts with a solved crate.
-func _learned() -> Array:
-	var out: Array = []
-	for id in Puzzles.CONCEPTS:
-		for pid in main.save.solved:
-			var p := Puzzles.by_id(pid)
-			if not p.is_empty() and p["concept"] == id and not out.has(id):
-				out.append(id)
-	return out

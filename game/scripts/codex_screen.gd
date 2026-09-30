@@ -34,17 +34,9 @@ func _ready() -> void:
 		grid.add_child(_card(id))
 
 
-func _learned(id: String) -> bool:
-	for pid in main.save.solved:
-		var p := Puzzles.by_id(pid)
-		if not p.is_empty() and p["concept"] == id:
-			return true
-	return false
-
-
 func _card(id: String) -> Control:
 	var c: Dictionary = Puzzles.CONCEPTS[id]
-	var known := _learned(id)
+	var known: bool = main.save.learned_concepts().has(id)
 	var p := PanelContainer.new()
 	p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	p.add_theme_stylebox_override("panel", TT.box(TT.TEAL_TINT if known else TT.SUNKEN, TT.INK if known else TT.BORDER, 20, 2, known))

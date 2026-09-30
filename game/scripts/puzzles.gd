@@ -10,6 +10,9 @@ extends RefCounted
 ##   magnet     turn a magnet so it pulls (0 = N|S, 1 = S|N)
 ##   balance    weigh a lever: choose the weight or the distance
 
+## "Nothing chosen yet" for a puzzle choice.
+const NONE := -999
+
 const MOTOR_DIRECTION := 1  # 1 = clockwise, -1 = counterclockwise
 
 const PUZZLES := [

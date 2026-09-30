@@ -4,7 +4,7 @@ extends Control
 const TT = preload("res://scripts/tt.gd")
 const Puzzles = preload("res://scripts/puzzles.gd")
 
-const NONE := -999
+const NONE := Puzzles.NONE
 
 var main
 var puzzle: Dictionary
@@ -27,7 +27,7 @@ func _ready() -> void:
 	top.add_theme_constant_override("separation", 12)
 	root.add_child(top)
 	var back := TT.button("<")
-	back.pressed.connect(func(): main.go("workshop" if main.workshop_mode == "walk" and main.save.settings["walk"] else "shelf"))
+	back.pressed.connect(func(): main.go(main.puzzle_exit()))
 	top.add_child(back)
 	var goal_card := PanelContainer.new()
 	goal_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -148,7 +148,7 @@ func _show_success() -> void:
 	collect.pressed.connect(func():
 		main.audio.sfx("collect")
 		main.collect(puzzle["id"])
-		main.go("workshop" if main.workshop_mode == "walk" and main.save.settings["walk"] else "shelf"))
+		main.go(main.puzzle_exit()))
 	row.add_child(collect)
 	collect.grab_focus()
 

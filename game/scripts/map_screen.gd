@@ -46,8 +46,9 @@ func _ready() -> void:
 		var t := TT.button("%s  %d/5" % [fam[1], count], "plain", 16)
 		t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var picked: bool = main.map_family == fam[0]
-		var fill: Color = TT.BRAND if fam[0] == "ground" else (TT.TEAL if fam[0] == "energy" else TT.BLUE)
-		var fg: Color = TT.ON_BRAND if fam[0] == "ground" else (TT.ON_TEAL if fam[0] == "energy" else TT.ON_BLUE)
+		var colors := TT.family_colors(fam[0])
+		var fill: Color = colors["fill"]
+		var fg: Color = colors["on"]
 		if picked:
 			for state in ["normal", "hover", "focus", "pressed"]:
 				t.add_theme_stylebox_override(state, TT.box(fill, TT.INK, 12, 4, true))

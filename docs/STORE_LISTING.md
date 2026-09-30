@@ -41,7 +41,7 @@ Primary: Education (games category: Puzzle). Secondary: Games.
 | User-generated content, chat | None |
 | In-app purchases, ads | None |
 | Collects personal data | No |
-| Uses location, camera, microphone, contacts | No |
+| Uses location, camera, microphone, contacts | No (vibration only) |
 | Links to the web or social media | None |
 
 Expected results: ESRB Everyone, PEGI 3, IARC generic 3+. Apple age rating 4+. Apple Kids Category age band: **9 to 11**. Fill in the questionnaires yourself and check the current wording; the answers above are what the game does today.
@@ -58,7 +58,7 @@ Expected results: ESRB Everyone, PEGI 3, IARC generic 3+. Apple age rating 4+. A
 
 - Target audience: age 9 to 12. Opt in to the Families program.
 - Data safety form: no data collected, no data shared, no encryption in transit question applies (no network use).
-- Permissions: none. The Android preset turns the internet permission off.
+- Permissions: vibration only (a normal permission that asks the user for nothing). The Android preset turns the internet permission off.
 - Content rating questionnaire: as in the table above.
 
 ## Screenshots to take (per device size)

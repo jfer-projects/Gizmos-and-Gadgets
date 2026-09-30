@@ -30,7 +30,6 @@ static var DANGER_TINT: Color = Color("#FBDCCB")
 static var SHADOW: Color = Color("#10243E")
 static var text_scale: float = 1.0
 static var motion: bool = true  # false = reduced motion: no idle spinning or confetti
-static var theme_name: String = "day"
 
 const THEMES := {
 	"day": {
@@ -66,7 +65,6 @@ static var _bold: FontVariation
 static func apply_theme(name: String) -> void:
 	if not THEMES.has(name):
 		name = "day"
-	theme_name = name
 	var t: Dictionary = THEMES[name]
 	SURFACE = Color(t["SURFACE"])
 	RAISED = Color(t["RAISED"])
@@ -213,13 +211,23 @@ static func draw_car(ci: CanvasItem, origin: Vector2, unit: float, tilt: float, 
 	var cab_line := cabin.duplicate()
 	cab_line.append(cabin[0])
 	ci.draw_polyline(cab_line, INK, 2.5 / unit, true)
-	ci.draw_style_box(box(body, INK, int(10), maxi(1, int(round(2.5 / unit))), false), Rect2(-52, -40, 104, 26))
+	ci.draw_style_box(box(body, INK, 10, maxi(1, int(round(2.5 / unit))), false), Rect2(-52, -40, 104, 26))
 	# the two wheels, each ringed with gear teeth
 	draw_gear(ci, Vector2(-30, -14), 20.0, 14, wheel_angle, RAISED)
 	draw_gear(ci, Vector2(30, -14), 20.0, 14, wheel_angle, RAISED)
 	# the drivetrain gears you chose, tucked inside the body
 	draw_gear(ci, Vector2(-8, -27), clampf(float(motor_teeth) * 0.6, 7.0, 12.0), motor_teeth, -wheel_angle * float(wheel_teeth) / float(motor_teeth), TEAL)
 	ci.draw_set_transform_matrix(Transform2D.IDENTITY)
+
+
+## Fill and on-fill colours for a vehicle family (ground, energy or air).
+static func family_colors(family: String) -> Dictionary:
+	match family:
+		"energy":
+			return {"fill": TEAL, "on": ON_TEAL}
+		"air":
+			return {"fill": BLUE, "on": ON_BLUE}
+	return {"fill": BRAND, "on": ON_BRAND}
 
 
 ## Draw the vehicle for a family: "ground" is the car, "energy" adds a solar
@@ -247,7 +255,7 @@ static func _draw_plane(ci: CanvasItem, origin: Vector2, unit: float, tilt: floa
 	var lw := 2.5 / unit
 	var tail := PackedVector2Array([Vector2(-50, -44), Vector2(-66, -68), Vector2(-40, -44)])
 	ci.draw_colored_polygon(tail, BLUE)
-	ci.draw_polyline(PackedVector2Array([tail[0], tail[1], tail[2]]), INK, lw, true)
+	ci.draw_polyline(tail, INK, lw, true)
 	ci.draw_style_box(box(body, INK, 10, 2), Rect2(-52, -46, 104, 26))
 	ci.draw_circle(Vector2(20, -36), 6, BLUE_TINT)
 	ci.draw_arc(Vector2(20, -36), 6, 0.0, TAU, 12, INK, lw, true)
@@ -267,7 +275,9 @@ static func _draw_plane(ci: CanvasItem, origin: Vector2, unit: float, tilt: floa
 
 ## The column every menu-style screen is built in. It fills the screen when the
 ## content fits and scrolls up and down when it does not (large text, small
-## phones), so nothing is ever cut off.
+## phones), so nothing is ever cut off. Drags on these screens scroll only when
+## there is something to scroll to, and none of them has a draggable control
+## (the workshop, which has a stick, does not use this column).
 static func screen_column(host: Control, left: int = 20, top: int = 12, right: int = 20, bottom: int = 12) -> VBoxContainer:
 	var sc := ScrollContainer.new()
 	sc.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -283,4 +293,8 @@ static func screen_column(host: Control, left: int = 20, top: int = 12, right: i
 	var v := VBoxContainer.new()
 	v.custom_minimum_size = Vector2(0, host.get_viewport_rect().size.y - top - bottom)
 	m.add_child(v)
+	# keep filling the screen when the window changes size or the phone turns
+	host.resized.connect(func():
+		if is_instance_valid(v) and host.size.y > 0.0:
+			v.custom_minimum_size.y = host.size.y - top - bottom)
 	return v
