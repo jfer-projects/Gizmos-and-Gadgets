@@ -15,6 +15,7 @@ var _t := 0.0
 var _speed := 1.0
 var _end_at := 0.0
 var _done_at := -1.0
+var _course := 0
 var _player: Dictionary
 var _rival: Dictionary
 var _time_label: Label
@@ -26,7 +27,8 @@ var _ff: Button
 
 func _ready() -> void:
 	_player = main.result
-	_rival = Drivetrain.rival_result()
+	_course = main.course
+	_rival = Drivetrain.rival_result(_course)
 	_end_at = _find_end_time()
 	_time_label = TT.label("0:00.0", 26, TT.INK, true)
 	_place_label = TT.label("1st", 26, TT.INK, true)
@@ -81,7 +83,7 @@ func _find_end_time() -> float:
 	var slow := 0
 	var need := int(STALL_CUTOFF / Drivetrain.DT)
 	for k in vs.size():
-		if vs[k] < 0.5 and Drivetrain.slope_deg_at(xs[k]) > 5.0:
+		if vs[k] < 0.5 and Drivetrain.segments(_course)[Drivetrain.segment_at(_course, xs[k])]["kind"] in ["hill", "mud"]:
 			slow += 1
 			if slow >= need:
 				return k * Drivetrain.DT
@@ -100,7 +102,7 @@ func _process(delta: float) -> void:
 		_t = _end_at
 		_done_at = Time.get_ticks_msec() / 1000.0
 		if not _player["finished"]:
-			_banner.text = "Stalled on the hill"
+			_banner.text = "Stalled"
 			_banner.visible = true
 	_update_hud()
 	queue_redraw()
@@ -128,7 +130,7 @@ func _update_hud() -> void:
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), TT.BLUE_TINT)
 	var px := _sample(_player, "xs")
-	var cam := Drivetrain.world_point(px)
+	var cam := Drivetrain.world_point(_course, px)
 	var anchor := Vector2(size.x * 0.34, size.y * 0.66)
 	# far hills, moving slower than the ground
 	var far := PackedVector2Array([Vector2(0, size.y)])
@@ -139,13 +141,13 @@ func _draw() -> void:
 	draw_colored_polygon(far, TT.TEAL_TINT)
 	draw_polyline(far.slice(1, far.size() - 1), TT.INK, 2.0, true)
 	# the ground
-	var total := Drivetrain.course_length()
+	var total := Drivetrain.course_length(_course)
 	var pts := PackedVector2Array()
 	var s := maxf(0.0, px - anchor.x / PX_PER_M - 10.0)
 	var s_end := minf(total + 40.0, px + (size.x - anchor.x) / PX_PER_M + 20.0)
 	var last := Vector2.ZERO
 	while s <= s_end:
-		last = _to_screen(Drivetrain.world_point(s), cam, anchor)
+		last = _to_screen(Drivetrain.world_point(_course, s), cam, anchor)
 		pts.append(last)
 		s += 4.0
 	if pts.size() >= 2:
@@ -155,13 +157,27 @@ func _draw() -> void:
 		draw_colored_polygon(poly, TT.BRAND_TINT)
 		draw_polyline(pts, TT.INK, 3.0, true)
 	# finish flag
-	var fp := _to_screen(Drivetrain.world_point(total), cam, anchor)
+	var fp := _to_screen(Drivetrain.world_point(_course, total), cam, anchor)
 	draw_line(fp, fp + Vector2(0, -70), TT.INK, 4.0)
 	draw_rect(Rect2(fp + Vector2(0, -70), Vector2(34, 24)), TT.BRAND)
 	draw_rect(Rect2(fp + Vector2(0, -70), Vector2(34, 24)), TT.INK, false, 2.5)
-	# hill sign
-	var hs := _to_screen(Drivetrain.world_point(Drivetrain.segment_end(0) + 20.0), cam, anchor)
-	draw_string(TT.bold_font(), hs + Vector2(-6, 34), "HILL", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, TT.MUTED)
+	# terrain signs: mud is shaded, hills and downhills get a label
+	var segs := Drivetrain.segments(_course)
+	for k in segs.size():
+		var kind: String = segs[k]["kind"]
+		if kind == "flat":
+			continue
+		var a := Drivetrain.segment_start(_course, k)
+		var b := Drivetrain.segment_end(_course, k)
+		if b < px - anchor.x / PX_PER_M - 20.0 or a > px + (size.x - anchor.x) / PX_PER_M + 20.0:
+			continue
+		var pa := _to_screen(Drivetrain.world_point(_course, a), cam, anchor)
+		var pb := _to_screen(Drivetrain.world_point(_course, b), cam, anchor)
+		if kind == "mud":
+			draw_colored_polygon(PackedVector2Array([pa, pb, pb + Vector2(0, 40), pa + Vector2(0, 40)]), Color(TT.BORDER, 0.5))
+		var mid := (pa + pb) * 0.5
+		var text: String = {"hill": "HILL", "mud": "MUD", "down": "DOWNHILL"}[kind]
+		draw_string(TT.bold_font(), mid + Vector2(-24, 34), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, TT.MUTED)
 	# rival and player cars
 	_draw_car_on_track(_sample(_rival, "xs"), cam, anchor, TT.BLUE, 12, 40)
 	_draw_car_on_track(px, cam, anchor, TT.BRAND, main.motor_teeth, main.wheel_teeth)
@@ -179,8 +195,8 @@ func _to_screen(world: Vector2, cam: Vector2, anchor: Vector2) -> Vector2:
 
 
 func _draw_car_on_track(s: float, cam: Vector2, anchor: Vector2, body: Color, m_teeth: int, w_teeth: int) -> void:
-	var here := _to_screen(Drivetrain.world_point(s), cam, anchor)
-	var deg := Drivetrain.slope_deg_at(s)
+	var here := _to_screen(Drivetrain.world_point(_course, s), cam, anchor)
+	var deg := Drivetrain.slope_deg_at(_course, s)
 	var tilt := -deg_to_rad(deg)
 	var spin := s * 0.6
 	TT.draw_car(self, here, CAR_UNIT, tilt, body, spin, m_teeth, w_teeth)

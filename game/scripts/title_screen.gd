@@ -23,7 +23,7 @@ func _ready() -> void:
 	var play := TT.button("Play", "primary", 24)
 	play.custom_minimum_size = Vector2(180, 64)
 	play.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	play.pressed.connect(func(): main.go("garage"))
+	play.pressed.connect(func(): main.go("map"))
 	box.add_child(play)
 	play.grab_focus()
 

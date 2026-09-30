@@ -9,20 +9,19 @@ const STALL_SECONDS := 2.0
 
 
 ## Returns up to two notes, biggest time loss first. Each note is a Dictionary:
-## time (float, when it happened), place (String), title, body,
-## direction ("pull" or "speed"), suggested_ratio (float).
+## time (float, when the segment began), place (String), title, body,
+## direction ("pull" or "speed"), stalled (bool), suggested_ratio (float).
 static func explain(result: Dictionary) -> Array:
-	var best: Dictionary = Drivetrain.best_build()
+	var ci: int = result["course"]
+	var best: Dictionary = Drivetrain.best_build(ci)
 	var best_result: Dictionary = best["result"]
 	var ratio: float = result["ratio"]
+	var segs := Drivetrain.segments(ci)
 	var notes: Array = []
-	for i in Drivetrain.COURSE.size():
-		var mine: float = result["seg_durations"][i]
-		var theirs: float = best_result["seg_durations"][i]
-		var reached: bool = i < result["seg_enter"].size()
-		if not reached:
-			continue
-		var loss := mine - theirs
+	for i in segs.size():
+		if i >= result["seg_enter"].size():
+			continue  # never got this far
+		var loss: float = result["seg_durations"][i] - best_result["seg_durations"][i]
 		if loss < MIN_LOSS_SECONDS:
 			continue
 		var stalled := _stalled_in_segment(result, i)
@@ -32,8 +31,8 @@ static func explain(result: Dictionary) -> Array:
 			"stalled": stalled,
 			"loss": loss,
 			"time": result["seg_enter"][i],
-			"place": _place_text(i),
-			"title": _title(i, direction, stalled),
+			"place": segs[i]["place"],
+			"title": _title(segs[i]["kind"], i, direction, stalled),
 			"body": _body(ratio, direction, stalled),
 			"direction": direction,
 			"suggested_ratio": _suggested_ratio(ratio, direction, stalled),
@@ -50,37 +49,42 @@ static func explain(result: Dictionary) -> Array:
 
 
 static func _stalled_in_segment(result: Dictionary, seg: int) -> bool:
+	var ci: int = result["course"]
+	var kind: String = Drivetrain.segments(ci)[seg]["kind"]
+	if kind != "hill" and kind != "mud":
+		return false
 	var xs: PackedFloat32Array = result["xs"]
 	var vs: PackedFloat32Array = result["vs"]
-	var slow_steps := 0
+	var start_x := Drivetrain.segment_start(ci, seg)
+	var end_x := Drivetrain.segment_end(ci, seg)
 	var needed := int(STALL_SECONDS / Drivetrain.DT)
-	var start_x: float = Drivetrain.segment_end(seg) - float(Drivetrain.COURSE[seg][0])
-	var end_x := Drivetrain.segment_end(seg)
+	var slow_steps := 0
 	for k in xs.size():
-		if xs[k] >= start_x and xs[k] < end_x and Drivetrain.slope_deg_at(xs[k]) > 5.0 and vs[k] < STALL_SPEED:
+		if xs[k] >= start_x and xs[k] < end_x and vs[k] < STALL_SPEED:
 			slow_steps += 1
 			if slow_steps >= needed:
 				return true
 	return false
 
 
-static func _place_text(seg: int) -> String:
-	return ["at the start", "on the hill", "on the flat"][seg]
-
-
-static func _title(seg: int, direction: String, stalled: bool) -> String:
-	if seg == 1:
-		return "Stalled on the hill" if stalled else "Slow up the hill"
-	if seg == 0:
+static func _title(kind: String, index: int, direction: String, stalled: bool) -> String:
+	match kind:
+		"hill":
+			return "Stalled on the hill" if stalled else "Slow up the hill"
+		"mud":
+			return "Stuck in the mud" if stalled else ("Bogged down in the mud" if direction == "pull" else "Slow through the mud")
+		"down":
+			return "Slow off the ramp" if direction == "pull" else "Topped out downhill"
+	if index == 0:
 		return "Slow off the line" if direction == "pull" else "Topped out early"
-	return "Slow after the hill" if direction == "pull" else "Topped out on the flat"
+	return "Slow to speed up" if direction == "pull" else "Topped out on the flat"
 
 
 static func _body(ratio: float, direction: String, stalled: bool) -> String:
 	var r := "%s : 1" % _fmt(ratio)
 	if direction == "pull":
 		if stalled:
-			return "A %s ratio spins fast but cannot pull up a steep hill. A bigger ratio pulls harder." % r
+			return "A %s ratio spins fast but cannot pull through here. A bigger ratio pulls harder." % r
 		return "A %s ratio did not pull hard enough. A bigger ratio pulls harder." % r
 	return "A %s ratio pulls hard but the wheels top out. A smaller ratio is faster." % r
 
@@ -95,11 +99,13 @@ static func _suggested_ratio(ratio: float, direction: String, stalled: bool) -> 
 	return Drivetrain.ratio_of(pair[0], pair[1])
 
 
-static func nearest_gears(target_ratio: float) -> Array:
-	var best_pair := [Drivetrain.MOTOR_GEARS[0], Drivetrain.WHEEL_GEARS[0]]
+## The gear pair nearest to a ratio. Pass owned lists to stay within what the
+## player has found; they default to every gear in the game.
+static func nearest_gears(target_ratio: float, motors: Array = Drivetrain.MOTOR_GEARS, wheels: Array = Drivetrain.WHEEL_GEARS) -> Array:
+	var best_pair := [motors[0], wheels[0]]
 	var best_gap := INF
-	for m in Drivetrain.MOTOR_GEARS:
-		for w in Drivetrain.WHEEL_GEARS:
+	for m in motors:
+		for w in wheels:
 			var gap := absf(Drivetrain.ratio_of(m, w) - target_ratio)
 			if gap < best_gap:
 				best_gap = gap

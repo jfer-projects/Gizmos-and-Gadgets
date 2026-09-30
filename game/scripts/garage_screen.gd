@@ -29,7 +29,7 @@ class GearStage extends Control:
 	func _draw() -> void:
 		var TT = preload("res://scripts/tt.gd")
 		draw_style_box(TT.box(TT.RAISED, TT.INK, 20, 2, true), Rect2(Vector2.ZERO, size - Vector2(0, 4)))
-		var unit := 2.3
+		var unit := minf(3.4, minf((size.x - 40.0) / (2.0 * float(motor_teeth + wheel_teeth)), (size.y - 90.0) / (2.0 * float(wheel_teeth))))
 		var rm := motor_teeth * unit
 		var rw := wheel_teeth * unit
 		var gap := rm + rw - 3.0
@@ -98,13 +98,27 @@ func _ready() -> void:
 	head.add_theme_constant_override("separation", 12)
 	var back := TT.button("<", "plain")
 	back.custom_minimum_size = Vector2(48, 48)
-	back.pressed.connect(func(): main.go("title"))
+	back.pressed.connect(func(): main.go("map"))
 	head.add_child(back)
-	head.add_child(TT.label("Garage", 28, TT.INK, true))
+	var title := TT.label(Drivetrain.COURSES[main.course]["name"], 24, TT.INK, true)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	head.add_child(title)
+	var found: int = main.save.owned("motor").size() + main.save.owned("wheel").size()
+	var total: int = Drivetrain.MOTOR_GEARS.size() + Drivetrain.WHEEL_GEARS.size()
+	var more := TT.button("Gears %d/%d" % [found, total], "energy", 16)
+	more.pressed.connect(func(): main.go("workshop"))
+	head.add_child(more)
 	side.add_child(head)
 
-	side.add_child(_stepper("Motor gear", Drivetrain.MOTOR_GEARS, "motor_teeth", true))
-	side.add_child(_stepper("Wheel gear", Drivetrain.WHEEL_GEARS, "wheel_teeth", false))
+	var motors: Array = main.save.owned("motor")
+	var wheels: Array = main.save.owned("wheel")
+	if not motors.has(main.motor_teeth):
+		main.motor_teeth = motors[0]
+	if not wheels.has(main.wheel_teeth):
+		main.wheel_teeth = wheels[0]
+	side.add_child(_stepper("Motor gear", motors, "motor_teeth", true))
+	side.add_child(_stepper("Wheel gear", wheels, "wheel_teeth", false))
 
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", TT.box(TT.RAISED, TT.INK, 20, 2, true))
@@ -183,9 +197,10 @@ func _refresh() -> void:
 	_speed_bar.queue_redraw()
 	_stage.motor_teeth = m
 	_stage.wheel_teeth = w
+	var blurb: String = Drivetrain.COURSES[main.course]["blurb"]
 	if r < 1.7:
-		_hint_label.text = "Low pull. The hill is steep. Try a bigger ratio."
+		_hint_label.text = "%s Low pull. Try a bigger ratio, or find bigger gears in the Workshop." % blurb
 	elif r > 6.0:
-		_hint_label.text = "Lots of pull, but the wheels will top out on the flat."
+		_hint_label.text = "%s Lots of pull, but the wheels will top out." % blurb
 	else:
-		_hint_label.text = "Ready. A bigger ratio pulls harder. A smaller one is faster."
+		_hint_label.text = "%s A bigger ratio pulls harder. A smaller one is faster." % blurb

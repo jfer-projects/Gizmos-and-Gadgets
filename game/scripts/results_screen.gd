@@ -14,6 +14,7 @@ class Replay extends Control:
 	var rival: Dictionary
 	var marks: Array = []
 	var span := 40.0
+	var top_speed := 22.0
 
 	func _init() -> void:
 		custom_minimum_size = Vector2(0, 76)
@@ -24,7 +25,7 @@ class Replay extends Control:
 		draw_style_box(TT.box(TT.RAISED, TT.INK, 12, 2), Rect2(Vector2.ZERO, size))
 		var pad := Vector2(12, 10)
 		var area := Rect2(pad, size - pad * 2.0)
-		var top := 22.0
+		var top := top_speed
 		_line(rival, TT.BLUE, area, top, 2.5)
 		_line(player, TT.INK, area, top, 3.5)
 		for m in marks:
@@ -41,6 +42,8 @@ class Replay extends Control:
 		var cut := vs.size()
 		for i in range(0, cut, step):
 			var t: float = i * DT.DT
+			if t > span:
+				break
 			pts.append(Vector2(area.position.x + area.size.x * clampf(t / span, 0.0, 1.0), area.end.y - area.size.y * clampf(vs[i] / top_speed, 0.0, 1.0)))
 		if pts.size() > 1:
 			draw_polyline(pts, col, w, true)
@@ -48,10 +51,12 @@ class Replay extends Control:
 
 func _ready() -> void:
 	var res: Dictionary = main.result
-	var rival: Dictionary = Drivetrain.rival_result()
+	var ci: int = main.course
+	var rival: Dictionary = Drivetrain.rival_result(ci)
 	var won: bool = res["finished"] and res["time"] <= rival["time"]
 	var notes: Array = Analysis.explain(res)
-	var stars := Drivetrain.stars_for(res["time"], res["finished"])
+	var stars := Drivetrain.stars_for(ci, res["time"], res["finished"])
+	main.save.record_stars(Drivetrain.COURSES[ci]["id"], stars)
 
 	var root := VBoxContainer.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -72,17 +77,22 @@ func _ready() -> void:
 		titles.add_child(TT.label("%.1f s vs the rival's %.1f s. Ratio %s." % [res["time"], rival["time"], Analysis.format_ratio(res["ratio"])], 18, TT.MUTED))
 	elif res["finished"]:
 		titles.add_child(TT.label("%.1f s behind" % (res["time"] - rival["time"]), 36, TT.INK, true))
-		titles.add_child(TT.label("So close. Here is what happened.", 18, TT.MUTED))
+		titles.add_child(TT.label("So close. Here is what happened." if res["time"] - rival["time"] < 2.0 else "Here is what happened.", 18, TT.MUTED))
 	else:
 		titles.add_child(TT.label("Not this time", 36, TT.INK, true))
 		titles.add_child(TT.label("The car could not finish. Here is what happened.", 18, TT.MUTED))
 	top.add_child(_stars(stars))
 	var home := TT.button("Home", "ghost")
-	home.pressed.connect(func(): main.go("title"))
+	home.text = "Courses"
+	home.pressed.connect(func(): main.go("map"))
 	top.add_child(home)
-	var retry := TT.button("Play again" if won else "Tweak and retry", "primary", 20)
-	retry.custom_minimum_size = Vector2(190, 52)
-	retry.pressed.connect(func(): main.go("garage"))
+	var has_next: bool = won and ci + 1 < Drivetrain.course_count()
+	var retry := TT.button("Next course" if has_next else ("Play again" if won else "Tweak and retry"), "primary", 20)
+	retry.custom_minimum_size = Vector2(170, 52)
+	retry.pressed.connect(func():
+		if has_next:
+			main.course = ci + 1
+		main.go("garage"))
 	top.add_child(retry)
 	retry.grab_focus()
 
@@ -90,6 +100,11 @@ func _ready() -> void:
 	replay.player = res
 	replay.rival = rival
 	replay.span = maxf(30.0, minf(rival["time"] + 6.0, 45.0))
+	var peak := 5.0
+	for arr in [res["vs"], rival["vs"]]:
+		for k in range(0, arr.size(), 6):
+			peak = maxf(peak, arr[k])
+	replay.top_speed = peak * 1.05
 	for n in notes:
 		replay.marks.append(n["time"])
 	root.add_child(replay)
@@ -131,10 +146,15 @@ func _note_card(n: Dictionary) -> Control:
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(body)
-	var pair := Analysis.nearest_gears(n["suggested_ratio"])
-	var btn := TT.button("Try %s" % Analysis.format_ratio(n["suggested_ratio"]), "info")
+	# Only suggest gears the player has actually found.
+	var pair := Analysis.nearest_gears(n["suggested_ratio"], main.save.owned("motor"), main.save.owned("wheel"))
+	var same: bool = pair[0] == main.motor_teeth and pair[1] == main.wheel_teeth
+	var btn := TT.button("Find gears" if same else "Try %s" % Analysis.format_ratio(Drivetrain.ratio_of(pair[0], pair[1])), "energy" if same else "info")
 	btn.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	btn.pressed.connect(func():
+		if same:
+			main.go("workshop")
+			return
 		main.motor_teeth = pair[0]
 		main.wheel_teeth = pair[1]
 		main.go("garage"))
