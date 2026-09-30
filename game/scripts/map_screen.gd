@@ -7,6 +7,8 @@ const Puzzles = preload("res://scripts/puzzles.gd")
 
 var main
 
+const FAMILIES := [["ground", "Cars"], ["energy", "Green energy"], ["air", "Planes"]]
+
 
 func _ready() -> void:
 	var root := VBoxContainer.new()
@@ -39,6 +41,29 @@ func _ready() -> void:
 	shop.pressed.connect(func(): main.go("workshop"))
 	head.add_child(shop)
 
+	# one tab per vehicle family
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 10)
+	root.add_child(tabs)
+	if main.map_family == "":
+		main.map_family = _default_family()
+	for fam in FAMILIES:
+		var count := _won_in(fam[0])
+		var t := TT.button("%s   %d/5" % [fam[1], count], "plain", 17)
+		t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var picked: bool = main.map_family == fam[0]
+		var fill: Color = TT.BRAND if fam[0] == "ground" else (TT.TEAL if fam[0] == "energy" else TT.BLUE)
+		var fg: Color = TT.ON_BRAND if fam[0] == "ground" else (TT.ON_TEAL if fam[0] == "energy" else TT.ON_BLUE)
+		if picked:
+			for state in ["normal", "hover", "focus", "pressed"]:
+				t.add_theme_stylebox_override(state, TT.box(fill, TT.INK, 12, 4, true))
+			for c in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+				t.add_theme_color_override(c, fg)
+		t.pressed.connect(func():
+			main.map_family = fam[0]
+			main.go("map"))
+		tabs.add_child(t)
+
 	var grid := GridContainer.new()
 	grid.columns = 3
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -47,6 +72,8 @@ func _ready() -> void:
 	root.add_child(grid)
 	var first_open: Button = null
 	for i in Drivetrain.course_count():
+		if Drivetrain.family_of(i) != main.map_family:
+			continue
 		var card := _course_card(i)
 		grid.add_child(card[0])
 		if first_open == null and card[1] != null and main.save.stars_for(Drivetrain.COURSES[i]["id"]) == 0:
@@ -85,5 +112,21 @@ func _course_card(i: int) -> Array:
 			main.go("garage"))
 		v.add_child(btn)
 	else:
-		v.add_child(TT.label("Win course %d to open" % i, 15, TT.MUTED, true))
+		v.add_child(TT.label("Win %s to open" % Drivetrain.COURSES[i - 1]["name"], 15, TT.MUTED, true))
 	return [p, btn]
+
+
+func _won_in(family: String) -> int:
+	var n := 0
+	for i in Drivetrain.course_count():
+		if Drivetrain.family_of(i) == family and main.save.stars_for(Drivetrain.COURSES[i]["id"]) > 0:
+			n += 1
+	return n
+
+
+## Open on the family that holds the next course to race.
+func _default_family() -> String:
+	for i in Drivetrain.course_count():
+		if main.save.course_unlocked(Drivetrain.COURSES, i) and main.save.stars_for(Drivetrain.COURSES[i]["id"]) == 0:
+			return Drivetrain.family_of(i)
+	return "ground"

@@ -220,3 +220,46 @@ static func draw_car(ci: CanvasItem, origin: Vector2, unit: float, tilt: float, 
 	# the drivetrain gears you chose, tucked inside the body
 	draw_gear(ci, Vector2(-8, -27), clampf(float(motor_teeth) * 0.6, 7.0, 12.0), motor_teeth, -wheel_angle * float(wheel_teeth) / float(motor_teeth), TEAL)
 	ci.draw_set_transform_matrix(Transform2D.IDENTITY)
+
+
+## Draw the vehicle for a family: "ground" is the car, "energy" adds a solar
+## panel, "air" is a propeller plane. `lift` raises it off the ground in pixels.
+static func draw_vehicle(ci: CanvasItem, family: String, origin: Vector2, unit: float, tilt: float, body: Color, wheel_angle: float, motor_teeth: int = 12, wheel_teeth: int = 24, lift: float = 0.0) -> void:
+	var at := origin - Vector2(0, lift)
+	if family == "air":
+		_draw_plane(ci, at, unit, tilt, body, wheel_angle, motor_teeth, wheel_teeth)
+		return
+	draw_car(ci, at, unit, tilt, body, wheel_angle, motor_teeth, wheel_teeth)
+	if family == "energy":
+		ci.draw_set_transform(at, tilt, Vector2(unit, unit))
+		ci.draw_line(Vector2(-8, -58), Vector2(-8, -66), INK, 2.5 / unit)
+		ci.draw_line(Vector2(14, -58), Vector2(14, -66), INK, 2.5 / unit)
+		var panel := Rect2(-26, -74, 60, 8)
+		ci.draw_rect(panel, TEAL)
+		ci.draw_rect(panel, INK, false, 2.5 / unit)
+		for k in range(1, 4):
+			ci.draw_line(Vector2(panel.position.x + k * 15.0, panel.position.y), Vector2(panel.position.x + k * 15.0, panel.end.y), ON_TEAL, 1.5 / unit)
+		ci.draw_set_transform_matrix(Transform2D.IDENTITY)
+
+
+static func _draw_plane(ci: CanvasItem, origin: Vector2, unit: float, tilt: float, body: Color, spin: float, motor_teeth: int, wheel_teeth: int) -> void:
+	ci.draw_set_transform(origin, tilt, Vector2(unit, unit))
+	var lw := 2.5 / unit
+	var tail := PackedVector2Array([Vector2(-50, -44), Vector2(-66, -68), Vector2(-40, -44)])
+	ci.draw_colored_polygon(tail, BLUE)
+	ci.draw_polyline(PackedVector2Array([tail[0], tail[1], tail[2]]), INK, lw, true)
+	ci.draw_style_box(box(body, INK, 10, 2), Rect2(-52, -46, 104, 26))
+	ci.draw_circle(Vector2(20, -36), 6, BLUE_TINT)
+	ci.draw_arc(Vector2(20, -36), 6, 0.0, TAU, 12, INK, lw, true)
+	var wing := PackedVector2Array([Vector2(-16, -46), Vector2(24, -46), Vector2(10, -66), Vector2(-14, -66)])
+	ci.draw_colored_polygon(wing, BLUE)
+	ci.draw_polyline(PackedVector2Array([wing[0], wing[1], wing[2], wing[3], wing[0]]), INK, lw, true)
+	draw_gear(ci, Vector2(-26, -12), 11.0, 9, spin, RAISED)
+	draw_gear(ci, Vector2(26, -12), 11.0, 9, spin, RAISED)
+	draw_gear(ci, Vector2(-4, -33), clampf(float(motor_teeth) * 0.5, 6.0, 10.0), motor_teeth, -spin * float(wheel_teeth) / float(motor_teeth), TEAL)
+	# propeller blades spin fast enough to blur into a bar
+	var hub := Vector2(58, -33)
+	var blade := Vector2(0, 20).rotated(spin * 5.0)
+	ci.draw_line(hub - blade, hub + blade, INK, 4.0 / unit)
+	ci.draw_circle(hub, 4, BRAND)
+	ci.draw_set_transform_matrix(Transform2D.IDENTITY)

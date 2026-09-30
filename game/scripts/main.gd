@@ -24,6 +24,7 @@ const SCREENS := {
 var save_path: String = SaveData.DEFAULT_PATH
 var save: RefCounted
 var course: int = 0
+var map_family: String = ""  # which family tab the course map shows
 var puzzle_id: String = ""
 var motor_teeth: int = 16
 var wheel_teeth: int = 16

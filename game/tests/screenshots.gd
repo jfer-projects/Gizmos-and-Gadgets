@@ -91,4 +91,14 @@ func _run() -> void:
 	await _shot("14_race_ramp_down")
 	_main.go("results")
 	await _shot("15_results_win")
+	# the other vehicle families, mid-race
+	for pair in [[5, 8, 32, 9.0, "16_race_solar"], [6, 8, 32, 9.0, "17_race_wind"], [7, 8, 56, 12.0, "18_race_spring"], [10, 12, 40, 10.0, "19_race_plane_runway"], [10, 12, 40, 20.0, "20_race_plane_air"], [12, 20, 20, 8.0, "21_race_plane_crash"]]:
+		_main.course = pair[0]
+		_main.motor_teeth = pair[1]
+		_main.wheel_teeth = pair[2]
+		_main.start_race()
+		await get_tree().create_timer(pair[3]).timeout
+		await _shot(pair[4])
+	_main.go("results")
+	await _shot("22_results_crash")
 	get_tree().quit()

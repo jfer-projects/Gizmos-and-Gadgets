@@ -17,6 +17,8 @@ static func explain(result: Dictionary) -> Array:
 	var best_result: Dictionary = best["result"]
 	var ratio: float = result["ratio"]
 	var segs := Drivetrain.segments(ci)
+	if result["fail"] == "crash":
+		return [_crash_note(result, best)]
 	var notes: Array = []
 	for i in segs.size():
 		if i >= result["seg_enter"].size():
@@ -48,6 +50,39 @@ static func explain(result: Dictionary) -> Array:
 	return notes.slice(0, 2)
 
 
+## A crash beats everything else: say what went wrong and which way to move.
+static func _crash_note(result: Dictionary, best: Dictionary) -> Dictionary:
+	var ci: int = result["course"]
+	var seg: int = result["crash_segment"]
+	var kind: String = Drivetrain.segments(ci)[seg]["kind"]
+	var ratio: float = result["ratio"]
+	var direction := "pull" if ratio < best["ratio"] else "speed"
+	var r := "%s : 1" % _fmt(ratio)
+	var title := "Too slow to take off" if kind == "runway" else "Fell out of the sky"
+	var body: String
+	if kind == "runway":
+		if direction == "pull":
+			body = "A %s ratio did not speed up fast enough before the runway ended. A bigger ratio speeds up faster." % r
+		else:
+			body = "A %s ratio pulls hard but the wheels top out below take-off speed. A smaller ratio is faster." % r
+	else:
+		if direction == "pull":
+			body = "A %s ratio let the plane slow down too much. A bigger ratio pulls harder." % r
+		else:
+			body = "A %s ratio topped out and the plane slowed down. A smaller ratio is faster." % r
+	return {
+		"segment": seg,
+		"stalled": true,
+		"loss": 999.0,
+		"time": result["time"],
+		"place": Drivetrain.segments(ci)[seg]["place"],
+		"title": title,
+		"body": body,
+		"direction": direction,
+		"suggested_ratio": _suggested_ratio(ratio, direction, true),
+	}
+
+
 static func _stalled_in_segment(result: Dictionary, seg: int) -> bool:
 	var ci: int = result["course"]
 	var kind: String = Drivetrain.segments(ci)[seg]["kind"]
@@ -67,14 +102,26 @@ static func _stalled_in_segment(result: Dictionary, seg: int) -> bool:
 	return false
 
 
+## Titles by segment kind: [when more pull was needed, when more speed was needed].
+const TITLES := {
+	"mud": ["Bogged down in the mud", "Slow through the mud"],
+	"down": ["Slow off the ramp", "Topped out downhill"],
+	"cloud": ["Slow in the clouds", "Topped out in the clouds"],
+	"head": ["Slow into the wind", "Topped out into the wind"],
+	"tail": ["Slow to use the tailwind", "Topped out with the wind"],
+	"runway": ["Slow on the runway", "Topped out on the runway"],
+	"air": ["Slow in the air", "Topped out in the air"],
+}
+
+
 static func _title(kind: String, index: int, direction: String, stalled: bool) -> String:
-	match kind:
-		"hill":
-			return "Stalled on the hill" if stalled else "Slow up the hill"
-		"mud":
-			return "Stuck in the mud" if stalled else ("Bogged down in the mud" if direction == "pull" else "Slow through the mud")
-		"down":
-			return "Slow off the ramp" if direction == "pull" else "Topped out downhill"
+	var pick := 0 if direction == "pull" else 1
+	if kind == "hill":
+		return "Stalled on the hill" if stalled else "Slow up the hill"
+	if kind == "mud" and stalled:
+		return "Stuck in the mud"
+	if TITLES.has(kind):
+		return TITLES[kind][pick]
 	if index == 0:
 		return "Slow off the line" if direction == "pull" else "Topped out early"
 	return "Slow to speed up" if direction == "pull" else "Topped out on the flat"

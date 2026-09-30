@@ -18,61 +18,85 @@ const MAX_TIME := 60.0
 const MOTOR_GEARS := [8, 12, 16, 20]
 const WHEEL_GEARS := [16, 24, 32, 40, 48, 56]
 
-## Segment kinds: flat, hill (stalls are possible), mud (stalls are possible), down.
-## len is metres along the track, slope is degrees, roll is rolling resistance.
-## "place" finishes the sentence "... [place]" in the loss notes.
-const COURSES := [
-	{
-		"id": "hill", "name": "Hill Climb", "rival": 3.3, "drag": 1.0,
-		"blurb": "A flat start, then a steep hill.",
-		"segments": [
-			{"kind": "flat", "len": 200.0, "slope": 0.0, "roll": 0.03, "place": "at the start"},
-			{"kind": "hill", "len": 120.0, "slope": 22.0, "roll": 0.03, "place": "on the hill"},
-			{"kind": "flat", "len": 200.0, "slope": 0.0, "roll": 0.03, "place": "on the flat"},
-		],
-	},
-	{
-		"id": "sprint", "name": "Windy Straight", "rival": 3.05, "drag": 0.15,
-		"blurb": "Almost no air drag. Long and fast.",
-		"segments": [
-			{"kind": "flat", "len": 100.0, "slope": 0.0, "roll": 0.03, "place": "at the start"},
-			{"kind": "flat", "len": 900.0, "slope": 0.0, "roll": 0.03, "place": "on the straight"},
-		],
-	},
-	{
-		"id": "ramp", "name": "Ramp Yard", "rival": 2.95, "drag": 1.0,
-		"blurb": "A short, very steep ramp, then a long downhill.",
-		"segments": [
-			{"kind": "flat", "len": 150.0, "slope": 0.0, "roll": 0.03, "place": "at the start"},
-			{"kind": "hill", "len": 40.0, "slope": 32.0, "roll": 0.03, "place": "on the ramp"},
-			{"kind": "flat", "len": 150.0, "slope": 0.0, "roll": 0.03, "place": "after the ramp"},
-			{"kind": "down", "len": 300.0, "slope": -12.0, "roll": 0.03, "place": "on the downhill"},
-		],
-	},
-	{
-		"id": "mud", "name": "Mud Flats", "rival": 3.7, "drag": 1.0,
-		"blurb": "Thick mud drags on your wheels.",
-		"segments": [
-			{"kind": "flat", "len": 80.0, "slope": 0.0, "roll": 0.03, "place": "at the start"},
-			{"kind": "mud", "len": 300.0, "slope": 0.0, "roll": 0.35, "place": "in the mud"},
-			{"kind": "flat", "len": 100.0, "slope": 0.0, "roll": 0.03, "place": "after the mud"},
-		],
-	},
-	{
-		"id": "pass", "name": "Mountain Pass", "rival": 4.0, "drag": 1.0,
-		"blurb": "Two climbs, and the second is steeper.",
-		"segments": [
-			{"kind": "flat", "len": 60.0, "slope": 0.0, "roll": 0.03, "place": "at the start"},
-			{"kind": "hill", "len": 120.0, "slope": 25.0, "roll": 0.03, "place": "on the first climb"},
-			{"kind": "flat", "len": 60.0, "slope": 0.0, "roll": 0.03, "place": "between the climbs"},
-			{"kind": "hill", "len": 120.0, "slope": 30.0, "roll": 0.03, "place": "on the second climb"},
-			{"kind": "flat", "len": 60.0, "slope": 0.0, "roll": 0.03, "place": "at the top"},
-		],
-	},
-]
+## Every course belongs to a vehicle family (ground, energy or air).
+## A segment is a stretch of track:
+##   kind   flat, hill, mud, down, cloud, head, tail, runway or air
+##   len    metres along the track
+##   slope  degrees (negative is downhill)
+##   roll   rolling resistance (0.03 is normal, mud is much higher)
+##   power  multiplier on motor torque (clouds, a winding-down spring)
+##   wind   constant push in newtons; positive helps, negative is a headwind
+##   drag   multiplier on air drag
+##   takeoff  runway only: speed needed at the end of the segment or you crash
+##   stall  air only: below this speed for a second and you fall
+##   place  finishes the sentence "... [place]" in the loss notes
+static var COURSES: Array = _build_courses()
+
+
+static func _s(kind: String, length: float, place: String, extra: Dictionary = {}) -> Dictionary:
+	var d := {"kind": kind, "len": length, "slope": 0.0, "roll": 0.03, "power": 1.0, "wind": 0.0, "drag": 1.0, "place": place}
+	d.merge(extra, true)
+	return d
+
+
+static func _build_courses() -> Array:
+	return [
+		# ---- Ground -------------------------------------------------------
+		{"id": "hill", "family": "ground", "name": "Hill Climb", "rival": 3.3, "drag": 1.0,
+			"blurb": "A flat start, then a steep hill.",
+			"segments": [_s("flat", 200, "at the start"), _s("hill", 120, "on the hill", {"slope": 22.0}), _s("flat", 200, "on the flat")]},
+		{"id": "sprint", "family": "ground", "name": "Windy Straight", "rival": 3.05, "drag": 0.15,
+			"blurb": "Almost no air drag. Long and fast.",
+			"segments": [_s("flat", 100, "at the start"), _s("flat", 900, "on the straight")]},
+		{"id": "ramp", "family": "ground", "name": "Ramp Yard", "rival": 2.95, "drag": 1.0,
+			"blurb": "A short, very steep ramp, then a long downhill.",
+			"segments": [_s("flat", 150, "at the start"), _s("hill", 40, "on the ramp", {"slope": 32.0}), _s("flat", 150, "after the ramp"), _s("down", 300, "on the downhill", {"slope": -12.0})]},
+		{"id": "mud", "family": "ground", "name": "Mud Flats", "rival": 3.7, "drag": 1.0,
+			"blurb": "Thick mud drags on your wheels.",
+			"segments": [_s("flat", 80, "at the start"), _s("mud", 300, "in the mud", {"roll": 0.35}), _s("flat", 100, "after the mud")]},
+		{"id": "pass", "family": "ground", "name": "Mountain Pass", "rival": 4.0, "drag": 1.0,
+			"blurb": "Two climbs, and the second is steeper.",
+			"segments": [_s("flat", 60, "at the start"), _s("hill", 120, "on the first climb", {"slope": 25.0}), _s("flat", 60, "between the climbs"), _s("hill", 120, "on the second climb", {"slope": 30.0}), _s("flat", 60, "at the top")]},
+		# ---- Green energy -------------------------------------------------
+		{"id": "solar", "family": "energy", "name": "Solar Roof", "rival": 3.3, "drag": 1.0,
+			"blurb": "Solar power fades when clouds roll in.",
+			"segments": [_s("flat", 100, "in the sun"), _s("cloud", 200, "in the clouds", {"power": 0.35}), _s("flat", 200, "back in the sun")]},
+		{"id": "wind", "family": "energy", "name": "Windy Lane", "rival": 3.95, "drag": 1.0,
+			"blurb": "A headwind, then a tailwind.",
+			"segments": [_s("flat", 100, "at the start"), _s("head", 250, "into the wind", {"wind": -45.0}), _s("tail", 250, "with the wind behind you", {"wind": 45.0})]},
+		{"id": "spring", "family": "energy", "name": "Spring Hill", "rival": 5.1, "drag": 1.0,
+			"blurb": "A wind-up spring pushes hard at first, then fades.",
+			"segments": [_s("flat", 60, "at the start"), _s("hill", 100, "on the first slope", {"slope": 14.0, "power": 0.8}), _s("hill", 100, "on the second slope", {"slope": 14.0, "power": 0.55}), _s("hill", 100, "on the last slope", {"slope": 14.0, "power": 0.35})]},
+		{"id": "ridge", "family": "energy", "name": "Cloudy Ridge", "rival": 4.3, "drag": 1.0,
+			"blurb": "A climb where the sun goes in.",
+			"segments": [_s("flat", 80, "at the start"), _s("hill", 100, "on the sunny climb", {"slope": 18.0}), _s("cloud", 100, "on the cloudy climb", {"slope": 18.0, "power": 0.5}), _s("flat", 100, "on the ridge")]},
+		{"id": "eco", "family": "energy", "name": "Eco Grand Prix", "rival": 3.95, "drag": 1.0,
+			"blurb": "Sun, clouds, wind and hills, all in one race.",
+			"segments": [_s("flat", 80, "at the start"), _s("head", 150, "into the wind", {"wind": -40.0}), _s("cloud", 120, "in the clouds", {"slope": 10.0, "power": 0.5}), _s("tail", 150, "with the wind behind you", {"wind": 40.0})]},
+		# ---- Air ----------------------------------------------------------
+		{"id": "runway", "family": "air", "name": "Runway Dash", "rival": 2.55, "drag": 1.0,
+			"blurb": "Reach take-off speed before the runway ends.",
+			"segments": [_s("runway", 200, "on the runway", {"takeoff": 17.0}), _s("air", 500, "in the air", {"roll": 0.0, "drag": 0.5, "stall": 12.0})]},
+		{"id": "short", "family": "air", "name": "Short Field", "rival": 2.5, "drag": 1.0,
+			"blurb": "A short runway. You need to speed up fast.",
+			"segments": [_s("runway", 120, "on the runway", {"takeoff": 17.0}), _s("air", 450, "in the air", {"roll": 0.0, "drag": 0.5, "stall": 12.0})]},
+		{"id": "headwind", "family": "air", "name": "Headwind Hop", "rival": 3.65, "drag": 1.0,
+			"blurb": "A strong wind blows against you in the air.",
+			"segments": [_s("runway", 220, "on the runway", {"takeoff": 18.0}), _s("air", 600, "in the air", {"roll": 0.0, "drag": 0.5, "wind": -40.0, "stall": 12.0})]},
+		{"id": "canyon", "family": "air", "name": "Canyon Run", "rival": 2.65, "drag": 1.0,
+			"blurb": "Gusts push you around between the canyon walls.",
+			"segments": [_s("runway", 200, "on the runway", {"takeoff": 17.0}), _s("air", 250, "in the tail gust", {"roll": 0.0, "drag": 0.5, "wind": 40.0, "stall": 12.0}), _s("air", 250, "in the crosswind", {"roll": 0.0, "drag": 1.4, "stall": 12.0})]},
+		{"id": "grand", "family": "air", "name": "Grand Air Race", "rival": 3.05, "drag": 1.0,
+			"blurb": "A short runway, a headwind and a long final leg.",
+			"segments": [_s("runway", 150, "on the runway", {"takeoff": 18.0}), _s("air", 250, "in the headwind", {"roll": 0.0, "drag": 0.5, "wind": -35.0, "stall": 12.0}), _s("air", 350, "on the final leg", {"roll": 0.0, "drag": 0.5, "stall": 12.0})]},
+	]
 
 static var _best_cache: Dictionary = {}
 static var _rival_cache: Dictionary = {}
+
+
+static func family_of(ci: int) -> String:
+	return COURSES[ci]["family"]
 
 
 static func course_count() -> int:
@@ -130,28 +154,32 @@ static func speed_score(ratio: float) -> int:
 
 
 ## Run one race at a fixed ratio. Returns:
-## course, ratio, finished (bool), time (float), xs / vs (PackedFloat32Array
-## per step), seg_enter (times the car entered each segment, then the finish),
-## seg_durations (seconds spent in each segment).
+## course, ratio, finished (bool), fail ("", "stall" or "crash"), crash_segment,
+## time (float), xs / vs (PackedFloat32Array per step), seg_enter (times the
+## car entered each segment, then the finish), seg_durations (seconds spent in
+## each segment).
 static func simulate(ci: int, ratio: float) -> Dictionary:
 	var x := 0.0
 	var v := 0.0
 	var t := 0.0
 	var total := course_length(ci)
 	var segs := segments(ci)
-	var drag: float = DRAG * float(COURSES[ci]["drag"])
+	var course_drag: float = DRAG * float(COURSES[ci]["drag"])
 	var xs := PackedFloat32Array([0.0])
 	var vs := PackedFloat32Array([0.0])
 	var seg_enter: Array = [0.0]
 	var next_bound := 0
 	var seg := 0
+	var crashed := false
+	var crash_segment := -1
+	var slow_in_air := 0.0
 	while x < total and t < MAX_TIME:
 		var s: Dictionary = segs[seg]
 		var th := deg_to_rad(s["slope"])
 		var wm := maxf(0.0, v / WHEEL_R * ratio)
-		var tm := maxf(0.0, MOTOR_T0 * (1.0 - wm / MOTOR_W0))
-		var force := ratio * tm / WHEEL_R
-		var resist := MASS * G * sin(th) + float(s["roll"]) * MASS * G * cos(th) + drag * v * v
+		var tm := maxf(0.0, MOTOR_T0 * (1.0 - wm / MOTOR_W0)) * float(s["power"])
+		var force := ratio * tm / WHEEL_R + float(s["wind"])
+		var resist := MASS * G * sin(th) + float(s["roll"]) * MASS * G * cos(th) + course_drag * float(s["drag"]) * v * v
 		var a := (force - resist) / MASS
 		if v <= 0.0 and a < 0.0:
 			a = 0.0
@@ -161,10 +189,23 @@ static func simulate(ci: int, ratio: float) -> Dictionary:
 		xs.append(x)
 		vs.append(v)
 		while next_bound < segs.size() and x >= segment_end(ci, next_bound):
+			# leaving a runway too slowly means no take-off
+			if segs[next_bound].has("takeoff") and v < float(segs[next_bound]["takeoff"]):
+				crashed = true
+				crash_segment = next_bound
 			seg_enter.append(t)
 			next_bound += 1
+		if crashed:
+			break
 		seg = mini(next_bound, segs.size() - 1)
-	var finished := x >= total
+		# in the air, dropping below stall speed for a second means falling
+		if s.has("stall") and x < total:
+			slow_in_air = slow_in_air + DT if v < float(s["stall"]) else 0.0
+			if slow_in_air > 1.0:
+				crashed = true
+				crash_segment = seg
+				break
+	var finished := x >= total and not crashed
 	var durations: Array = []
 	for i in segs.size():
 		if i >= seg_enter.size():
@@ -172,11 +213,13 @@ static func simulate(ci: int, ratio: float) -> Dictionary:
 		elif i + 1 < seg_enter.size():
 			durations.append(seg_enter[i + 1] - seg_enter[i])
 		else:
-			durations.append(t - seg_enter[i])  # still in it when time ran out
+			durations.append(t - seg_enter[i])  # still in it when the race ended
 	return {
 		"course": ci,
 		"ratio": ratio,
 		"finished": finished,
+		"fail": "" if finished else ("crash" if crashed else "stall"),
+		"crash_segment": crash_segment,
 		"time": t,
 		"xs": xs,
 		"vs": vs,

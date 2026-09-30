@@ -29,6 +29,8 @@ func _init() -> void:
 	_test_puzzle_outcomes()
 	_test_save_round_trip()
 	_test_unlocking()
+	_test_families()
+	_test_air_crashes()
 	_test_audio()
 	_test_settings_round_trip()
 	_test_theme_contrast()
@@ -294,3 +296,37 @@ func _test_theme_contrast() -> void:
 			var ratio := _contrast(p[1], p[2])
 			check(ratio >= p[3], "%s: %s is %.1f:1 (needs %.1f)" % [theme, p[0], ratio, p[3]])
 	TT.apply_theme("day")
+
+
+func _test_families() -> void:
+	var counts := {"ground": 0, "energy": 0, "air": 0}
+	for c in Drivetrain.COURSES:
+		counts[c["family"]] += 1
+	check(Drivetrain.course_count() == 15 and counts["ground"] == 5 and counts["energy"] == 5 and counts["air"] == 5, "15 courses, five per family")
+	var ids := {}
+	for c in Drivetrain.COURSES:
+		ids[c["id"]] = true
+	check(ids.size() == 15, "course ids are unique")
+	# clouds really cost time and a tailwind really helps
+	var solar_sunny := Drivetrain.simulate(5, 4.0)
+	check(solar_sunny["finished"] and solar_sunny["seg_durations"][1] > solar_sunny["seg_durations"][0] * 0.5, "solar: the cloudy stretch is slower per metre than the sunny start")
+	var headwind := Drivetrain.simulate(6, 4.0)
+	check(headwind["seg_durations"][1] / 250.0 > headwind["seg_durations"][2] / 250.0, "wind lane: the headwind stretch is slower than the tailwind stretch")
+	# a spring that fades needs pull: the starting gears cannot finish it
+	check(not Drivetrain.simulate(7, 1.5)["finished"], "spring hill cannot be finished with the starting gears")
+
+
+func _test_air_crashes() -> void:
+	for ci in [10, 11, 12, 13, 14]:
+		var name: String = Drivetrain.COURSES[ci]["name"]
+		var too_high := Drivetrain.simulate(ci, 8.0)
+		check(too_high["fail"] == "crash", "%s: an 8:1 ratio crashes (tops out below take-off speed)" % name)
+		var too_low := Drivetrain.simulate(ci, 1.0)
+		check(too_low["fail"] == "crash", "%s: a 1:1 ratio crashes (too slow to reach take-off speed)" % name)
+		var notes := Analysis.explain(too_low)
+		check(notes.size() == 1 and notes[0]["title"] == "Too slow to take off" and notes[0]["direction"] == "pull", "%s: 1:1 is told to add pull" % name)
+		notes = Analysis.explain(too_high)
+		check(notes.size() == 1 and notes[0]["direction"] == "speed", "%s: 8:1 is told to add speed" % name)
+		var hint: float = notes[0]["suggested_ratio"]
+		check(hint < 8.0, "%s: the speed hint lowers the ratio" % name)
+		check(Drivetrain.stars_for(ci, too_low["time"], false) == 0, "%s: a crash earns no stars" % name)

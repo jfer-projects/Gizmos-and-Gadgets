@@ -81,7 +81,7 @@ func _ready() -> void:
 		titles.add_child(TT.label("So close. Here is what happened." if res["time"] - rival["time"] < 2.0 else "Here is what happened.", 18, TT.MUTED))
 	else:
 		titles.add_child(TT.label("Not this time", 36, TT.INK, true))
-		titles.add_child(TT.label("The car could not finish. Here is what happened.", 18, TT.MUTED))
+		titles.add_child(TT.label("You did not finish. Here is what happened.", 18, TT.MUTED))
 	top.add_child(_stars(stars))
 	var home := TT.button("Home", "ghost")
 	home.text = "Courses"
@@ -93,6 +93,7 @@ func _ready() -> void:
 	retry.pressed.connect(func():
 		if has_next:
 			main.course = ci + 1
+			main.map_family = Drivetrain.family_of(ci + 1)
 		main.go("garage"))
 	top.add_child(retry)
 	retry.grab_focus()
