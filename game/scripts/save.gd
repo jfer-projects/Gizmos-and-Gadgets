@@ -37,6 +37,26 @@ func owned(kind: String) -> Array:
 	return list
 
 
+## Parts and badges found so far (ids).
+func parts() -> Array:
+	var out: Array = []
+	for id in solved:
+		var p := Puzzles.by_id(id)
+		if not p.is_empty() and (p["reward"]["kind"] == "part" or p["reward"]["kind"] == "badge"):
+			out.append(p["reward"]["id"])
+	return out
+
+
+## The parts a family still needs before its courses open.
+func missing_parts(family: String) -> Array:
+	var have := parts()
+	var out: Array = []
+	for part in Puzzles.FAMILY_PARTS.get(family, []):
+		if not have.has(part):
+			out.append(part)
+	return out
+
+
 func is_solved(id: String) -> bool:
 	return solved.has(id)
 
@@ -58,8 +78,11 @@ func record_stars(course_id: String, count: int) -> void:
 
 
 ## A course is open when the one before it has been won.
+## Courses in a new family also need that family's parts.
 func course_unlocked(courses: Array, index: int) -> bool:
-	return index == 0 or stars_for(courses[index - 1]["id"]) > 0
+	if index > 0 and stars_for(courses[index - 1]["id"]) == 0:
+		return false
+	return missing_parts(courses[index]["family"]).is_empty()
 
 
 func write() -> void:

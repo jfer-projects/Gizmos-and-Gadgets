@@ -47,7 +47,7 @@ func _ready() -> void:
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		var reward: Dictionary = p["reward"]
-		b.text = "%s\n%s" % [p["title"], ("Found %dT %s gear" % [reward["teeth"], reward["kind"]]) if done else "Crate %d: tap to open" % (i + 1)]
+		b.text = "%s\n%s" % [p["title"], ("Found %s" % Puzzles.reward_text(p)) if done else "Crate %d: tap to open" % (i + 1)]
 		b.pressed.connect(func():
 			main.puzzle_id = p["id"]
 			main.go("puzzle"))

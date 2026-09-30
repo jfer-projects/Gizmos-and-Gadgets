@@ -30,6 +30,7 @@ func _init() -> void:
 	_test_save_round_trip()
 	_test_unlocking()
 	_test_families()
+	_test_family_gates()
 	_test_air_crashes()
 	_test_audio()
 	_test_settings_round_trip()
@@ -330,3 +331,30 @@ func _test_air_crashes() -> void:
 		var hint: float = notes[0]["suggested_ratio"]
 		check(hint < 8.0, "%s: the speed hint lowers the ratio" % name)
 		check(Drivetrain.stars_for(ci, too_low["time"], false) == 0, "%s: a crash earns no stars" % name)
+
+
+func _test_family_gates() -> void:
+	var s := SaveData.new()
+	s.path = "user://test_gates.json"
+	for c in Drivetrain.COURSES:
+		s.stars[c["id"]] = 1  # pretend every course is won
+	s.stars.erase("solar")
+	check(not s.course_unlocked(Drivetrain.COURSES, 5), "green energy stays shut without its parts, even with stars")
+	check(s.missing_parts("energy") == ["solar_panel", "wind_blade"], "the energy family needs the solar panel and the wind blade")
+	s.solved.append("solar_wire")
+	check(not s.course_unlocked(Drivetrain.COURSES, 5), "one of two parts is not enough")
+	s.solved.append("wind_night")
+	check(s.course_unlocked(Drivetrain.COURSES, 5), "both parts open the first green energy course")
+	check(not s.course_unlocked(Drivetrain.COURSES, 10), "planes still need their own parts")
+	s.solved.append("wing_balance")
+	s.solved.append("prop_balance")
+	s.stars["eco"] = 1
+	check(s.course_unlocked(Drivetrain.COURSES, 10), "wings and a propeller open the first plane course")
+	# every part a family needs can be found in a crate
+	var found := {}
+	for p in Puzzles.PUZZLES:
+		if p["reward"].has("id"):
+			found[p["reward"]["id"]] = true
+	for fam in Puzzles.FAMILY_PARTS:
+		for part in Puzzles.FAMILY_PARTS[fam]:
+			check(found.has(part), "the %s can be found in a crate" % part)

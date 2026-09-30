@@ -101,4 +101,10 @@ func _run() -> void:
 		await _shot(pair[4])
 	_main.go("results")
 	await _shot("22_results_crash")
+	for pick in [["solar_wire", 0, "23_puzzle_circuit_series"], ["solar_wire", 1, "24_puzzle_circuit_parallel"], ["wind_night", 0, "25_puzzle_energy_miss"], ["wind_night", 1, "26_puzzle_energy_wind"], ["magnets", 1, "27_puzzle_magnet_repel"], ["magnets", 0, "28_puzzle_magnet_attract"], ["wing_balance", 4, "29_puzzle_balance_miss"], ["wing_balance", 3, "30_puzzle_balance_ok"], ["prop_balance", 6, "31_puzzle_balance_distance"]]:
+		_main.puzzle_id = pick[0]
+		_main.go("puzzle")
+		_screen()._pick(pick[1])
+		_screen()._try()
+		await _shot(pick[2], 1.9)
 	get_tree().quit()

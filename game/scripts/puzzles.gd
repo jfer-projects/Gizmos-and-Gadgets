@@ -5,6 +5,10 @@ extends RefCounted
 ##   direction  choose how many idler gears sit between motor and wheel
 ##   speed      choose the output gear's teeth to get a speed goal
 ##   ratio      choose the wheel gear's teeth to make a ratio
+##   circuit    wire two bulbs (0 series, 1 parallel, 2 open)
+##   energy     pick a power source for the weather (0 solar, 1 wind, 2 wait)
+##   magnet     turn a magnet so it pulls (0 = N|S, 1 = S|N)
+##   balance    weigh a lever: choose the weight or the distance
 
 const MOTOR_DIRECTION := 1  # 1 = clockwise, -1 = counterclockwise
 
@@ -65,6 +69,46 @@ const PUZZLES := [
 		"reward": {"kind": "wheel", "teeth": 56},
 		"hint": "7 times 8 teeth is the wheel gear you need.",
 	},
+	{
+		"id": "solar_wire", "kind": "circuit", "concept": "circuit",
+		"title": "Wire the solar panel",
+		"goal": "The solar panel powers two lights. Wire them so both shine bright.",
+		"options": [0, 1, 2], "answer": 1,
+		"reward": {"kind": "part", "id": "solar_panel", "name": "solar panel"},
+		"hint": "In a parallel circuit each bulb has its own path to the battery.",
+	},
+	{
+		"id": "wind_night", "kind": "energy", "concept": "sources",
+		"title": "Power for a windy night",
+		"goal": "It is night and the wind is blowing. Which power source keeps the car moving?",
+		"night": true, "wind": true, "options": [0, 1, 2], "answer": 1,
+		"reward": {"kind": "part", "id": "wind_blade", "name": "wind blade"},
+		"hint": "Solar panels need sunlight. What does the night still have?",
+	},
+	{
+		"id": "magnets", "kind": "magnet", "concept": "magnets",
+		"title": "Make magnets pull",
+		"goal": "The left magnet points its S pole at you. Turn the right magnet so they pull together.",
+		"options": [0, 1], "answer": 0,
+		"reward": {"kind": "badge", "id": "magnet_badge", "name": "magnet badge"},
+		"hint": "Opposite poles attract. The left magnet's S pole needs an N pole to face it.",
+	},
+	{
+		"id": "wing_balance", "kind": "balance", "concept": "balance",
+		"title": "Balance the wings",
+		"goal": "Balance the lever. The left weight is 6 kg at 2 steps. Choose the weight to hang at 4 steps on the right.",
+		"left": [6, 2], "vary": "weight", "fixed": 4, "options": [2, 3, 4, 6], "answer": 3,
+		"reward": {"kind": "part", "id": "wings", "name": "wings"},
+		"hint": "Weight times distance must match on both sides. 6 times 2 is 12. What times 4 is 12?",
+	},
+	{
+		"id": "prop_balance", "kind": "balance", "concept": "balance",
+		"title": "Balance the propeller",
+		"goal": "Balance the lever. The left weight is 4 kg at 3 steps. A 2 kg weight goes on the right. Choose how many steps out.",
+		"left": [4, 3], "vary": "distance", "fixed": 2, "options": [2, 4, 6, 8], "answer": 6,
+		"reward": {"kind": "part", "id": "propeller", "name": "propeller"},
+		"hint": "4 times 3 is 12. A lighter weight has to sit farther out. 2 times what is 12?",
+	},
 ]
 
 const CONCEPTS := {
@@ -78,11 +122,37 @@ const CONCEPTS := {
 		"body": "A small gear turned by a big gear spins faster. A big gear turned by a small gear spins slower.",
 		"formula": "speed change = driver teeth ÷ output teeth",
 	},
+	"circuit": {
+		"title": "Series and parallel",
+		"body": "In a series circuit the bulbs share one path, so they glow dimly. In a parallel circuit each bulb has its own path, so each glows bright.",
+		"formula": "parallel: every bulb gets the full battery",
+	},
+	"sources": {
+		"title": "Energy sources",
+		"body": "Sunlight powers solar panels. Moving air turns wind blades. Pick the source that matches the weather.",
+		"formula": "no sun, no solar power. no wind, no wind power",
+	},
+	"magnets": {
+		"title": "Magnets",
+		"body": "Opposite poles pull together. Matching poles push apart.",
+		"formula": "N pulls S. N pushes N",
+	},
+	"balance": {
+		"title": "Balancing a lever",
+		"body": "A lever balances when weight times distance is the same on both sides. A light weight far out can balance a heavy weight close in.",
+		"formula": "weight × distance = weight × distance",
+	},
 	"ratio": {
 		"title": "Gear ratio",
 		"body": "Divide the wheel gear's teeth by the motor gear's teeth. A bigger ratio pulls harder but tops out at a lower speed.",
 		"formula": "ratio = wheel teeth ÷ motor teeth",
 	},
+}
+
+## Parts a family needs before its courses open.
+const FAMILY_PARTS := {
+	"energy": ["solar_panel", "wind_blade"],
+	"air": ["wings", "propeller"],
 }
 
 ## Gears the player starts with, before opening any crate.
@@ -101,8 +171,8 @@ static func by_id(id: String) -> Dictionary:
 	return {}
 
 
-## What a choice does. Returns dir (1 or -1, of the last gear), factor (output
-## speed as a multiple of the driver's) and ratio (for ratio puzzles, else 0).
+## What a choice does. Always has dir, factor and ratio (for gear puzzles);
+## other kinds add their own fields (brightness, power, attract, torque_l/r).
 static func outcome(p: Dictionary, choice: int) -> Dictionary:
 	match p["kind"]:
 		"direction":
@@ -113,6 +183,22 @@ static func outcome(p: Dictionary, choice: int) -> Dictionary:
 			return {"dir": -MOTOR_DIRECTION, "factor": float(p["driver"]) / float(choice), "ratio": 0.0}
 		"ratio":
 			return {"dir": -MOTOR_DIRECTION, "factor": float(p["motor"]) / float(choice), "ratio": float(choice) / float(p["motor"])}
+		"circuit":
+			# series bulbs share the battery, parallel bulbs each get all of it
+			return {"brightness": [0.5, 1.0, 0.0][choice]}
+		"energy":
+			var power := 0.0
+			match choice:
+				0: power = 0.0 if p.get("night", false) else 1.0
+				1: power = 1.0 if p.get("wind", false) else 0.0
+			return {"power": power}
+		"magnet":
+			# the left magnet shows its S pole to the right; unlike poles attract
+			return {"attract": choice == 0}
+		"balance":
+			var tl: int = int(p["left"][0]) * int(p["left"][1])
+			var tr: int = choice * int(p["fixed"])
+			return {"torque_l": tl, "torque_r": tr}
 	return {"dir": 1, "factor": 1.0, "ratio": 0.0}
 
 
@@ -125,6 +211,14 @@ static func is_correct(p: Dictionary, choice: int) -> bool:
 			return is_equal_approx(o["factor"], p["want_factor"])
 		"ratio":
 			return is_equal_approx(o["ratio"], p["want_ratio"])
+		"circuit":
+			return o["brightness"] >= 1.0
+		"energy":
+			return o["power"] >= 1.0
+		"magnet":
+			return o["attract"]
+		"balance":
+			return o["torque_l"] == o["torque_r"]
 	return false
 
 
@@ -144,13 +238,51 @@ static func describe(p: Dictionary, choice: int) -> String:
 			return "That output spins %s times slower." % _num(1.0 / f)
 		"ratio":
 			return "That makes a %s : 1 ratio." % _num(o["ratio"])
+		"circuit":
+			if o["brightness"] >= 1.0:
+				return "Each bulb has its own path, so both shine bright."
+			if o["brightness"] > 0.0:
+				return "In a series circuit the bulbs share the battery, so both glow dimly."
+			return "There is a gap, so no current flows and the bulbs stay dark."
+		"energy":
+			if o["power"] >= 1.0:
+				return "It works: the car keeps moving."
+			if choice == 2:
+				return "Waiting makes no power. The car stays still."
+			return "No sunlight at night, so the solar panel makes no power."
+		"magnet":
+			return "The magnets pull together." if o["attract"] else "Matching poles push apart."
+		"balance":
+			var tl: int = o["torque_l"]
+			var tr: int = o["torque_r"]
+			if tl == tr:
+				return "Both sides are %d, so the lever balances." % tl
+			var down := "left" if tl > tr else "right"
+			return "The left side is %d and the right side is %d, so the %s side goes down." % [tl, tr, down]
 	return ""
 
 
 static func option_label(p: Dictionary, choice: int) -> String:
-	if p["kind"] == "direction":
-		return "No idler" if choice == 0 else ("1 idler" if choice == 1 else "%d idlers" % choice)
+	match p["kind"]:
+		"direction":
+			return "No idler" if choice == 0 else ("1 idler" if choice == 1 else "%d idlers" % choice)
+		"circuit":
+			return ["Series", "Parallel", "Gap"][choice]
+		"energy":
+			return ["Solar panel", "Wind blade", "Wait"][choice]
+		"magnet":
+			return "N | S" if choice == 0 else "S | N"
+		"balance":
+			return ("%d kg" if p["vary"] == "weight" else "%d steps") % choice
 	return "%dT" % choice
+
+
+## What the player finds, in words: "the 32T wheel gear", "the wings".
+static func reward_text(p: Dictionary) -> String:
+	var r: Dictionary = p["reward"]
+	if r["kind"] == "motor" or r["kind"] == "wheel":
+		return "the %dT %s gear" % [r["teeth"], r["kind"]]
+	return "the %s" % r["name"]
 
 
 static func _num(x: float) -> String:
