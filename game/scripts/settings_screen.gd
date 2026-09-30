@@ -13,6 +13,7 @@ const TOGGLES := [
 	["large_text", "Large text"],
 	["reduced_motion", "Reduced motion"],
 	["pests", "Pests in the workshop"],
+	["walk", "Walk around workshop"],
 ]
 const THEME_NAMES := {"day": "Day", "night": "Night Shift", "hc": "High Contrast"}
 

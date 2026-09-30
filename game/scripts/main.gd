@@ -10,6 +10,7 @@ const SCREENS := {
 	"title": "res://scripts/title_screen.gd",
 	"map": "res://scripts/map_screen.gd",
 	"workshop": "res://scripts/workshop_screen.gd",
+	"shelf": "res://scripts/shelf_screen.gd",
 	"puzzle": "res://scripts/puzzle_screen.gd",
 	"garage": "res://scripts/garage_screen.gd",
 	"race": "res://scripts/race_screen.gd",
@@ -26,6 +27,10 @@ var save: RefCounted
 var course: int = 0
 var map_family: String = ""  # which family tab the course map shows
 var puzzle_id: String = ""
+var room_index: int = 0                          # which workshop room is open
+var player_pos: Vector2 = Vector2(-1, -1)        # walking position as fractions of the floor; (-1,-1) = start
+var carried: Array = []                          # puzzle ids whose finds are in your hands
+var workshop_mode: String = "walk"               # "walk" or "list": how the open crate was reached
 var motor_teeth: int = 16
 var wheel_teeth: int = 16
 var result: Dictionary = {}
@@ -37,6 +42,7 @@ var _back_to: String = "title"  # where Settings and the Codex return to
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	save = SaveData.new()
 	save.path = save_path
 	save.load_from_disk()
@@ -82,6 +88,22 @@ func ratio() -> float:
 	return Drivetrain.ratio_of(motor_teeth, wheel_teeth)
 
 
+## A solved crate's find: carried in the walking workshop, kept at once in the list.
+func collect(id: String) -> void:
+	if workshop_mode == "walk" and save.settings["walk"]:
+		if not carried.has(id) and not save.is_solved(id):
+			carried.append(id)
+	else:
+		save.mark_solved(id)
+
+
+## Bank everything you are carrying.
+func deliver_carried() -> void:
+	for id in carried:
+		save.mark_solved(id)
+	carried = []
+
+
 func start_race() -> void:
 	save.last_motor = motor_teeth
 	save.last_wheel = wheel_teeth
@@ -90,6 +112,8 @@ func start_race() -> void:
 
 
 func go(screen: String) -> void:
+	if screen == "workshop" and not save.settings["walk"]:
+		screen = "shelf"
 	audio.music("race" if screen == "race" else "calm")
 	if screen == "title" or screen == "map":
 		save.write()

@@ -33,7 +33,7 @@ func _ready() -> void:
 	top.add_theme_constant_override("separation", 12)
 	root.add_child(top)
 	var back := TT.button("<")
-	back.pressed.connect(func(): main.go("workshop"))
+	back.pressed.connect(func(): main.go("workshop" if main.workshop_mode == "walk" and main.save.settings["walk"] else "shelf"))
 	top.add_child(back)
 	var goal_card := PanelContainer.new()
 	goal_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -154,8 +154,8 @@ func _show_success() -> void:
 	collect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	collect.pressed.connect(func():
 		main.audio.sfx("collect")
-		main.save.mark_solved(puzzle["id"])
-		main.go("workshop"))
+		main.collect(puzzle["id"])
+		main.go("workshop" if main.workshop_mode == "walk" and main.save.settings["walk"] else "shelf"))
 	row.add_child(collect)
 	collect.grab_focus()
 

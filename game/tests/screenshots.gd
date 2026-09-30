@@ -40,6 +40,17 @@ func _run() -> void:
 	await _shot("02_map_new")
 	_main.go("workshop")
 	await _shot("03_workshop_new")
+	_main.carried = ["idler_cw"]
+	_main.player_pos = Vector2(0.30, 0.72)
+	_main.go("workshop")
+	_screen()._pests[0]["pos"] = _screen()._player + Vector2(90, -20)
+	await _shot("03b_workshop_carrying")
+	_main.carried = []
+	_main.room_index = 1
+	_main.player_pos = Vector2(-1, -1)
+	_main.go("workshop")
+	await _shot("03c_workshop_green")
+	_main.room_index = 0
 	_main.puzzle_id = "idler_cw"
 	_main.go("puzzle")
 	await _shot("04_puzzle_direction")

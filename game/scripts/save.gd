@@ -24,6 +24,7 @@ static func default_settings() -> Dictionary:
 		"large_text": false,
 		"reduced_motion": false,
 		"pests": true,
+		"walk": true,          # walk around the workshop instead of a list
 	}
 
 
