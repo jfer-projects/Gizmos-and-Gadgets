@@ -19,6 +19,7 @@ static func default_settings() -> Dictionary:
 	return {
 		"theme": "day",         # day, night, hc
 		"sfx": true,
+		"haptics": true,
 		"music": true,
 		"read_aloud": false,
 		"large_text": false,

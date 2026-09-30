@@ -1,0 +1,43 @@
+name: Export builds
+
+# Run by hand from the Actions tab. Builds are unsigned test builds.
+# Android and iOS need signing keys and are described in docs/RELEASE_CHECKLIST.md.
+on:
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.4.1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install export templates
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/4.4.1.stable ~/.local/share/godot/export_templates/4.4.1.stable
+      - name: Import project
+        run: godot --headless --path game --import || true
+      - name: Export web, Windows, macOS and Linux
+        run: |
+          mkdir -p game/build/web game/build/windows game/build/macos game/build/linux
+          godot --headless --path game --export-release "Web" build/web/index.html
+          godot --headless --path game --export-release "Windows Desktop" build/windows/TinkerTrack.exe
+          godot --headless --path game --export-release "macOS" build/macos/TinkerTrack.zip
+          godot --headless --path game --export-release "Linux" build/linux/TinkerTrack.x86_64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tinker-track-web
+          path: game/build/web
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tinker-track-windows
+          path: game/build/windows
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tinker-track-macos
+          path: game/build/macos
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tinker-track-linux
+          path: game/build/linux

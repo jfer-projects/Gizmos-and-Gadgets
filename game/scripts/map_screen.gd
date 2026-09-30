@@ -7,18 +7,12 @@ const Puzzles = preload("res://scripts/puzzles.gd")
 
 var main
 
-const FAMILIES := [["ground", "Cars"], ["energy", "Green energy"], ["air", "Planes"]]
+const FAMILIES := [["ground", "Cars"], ["energy", "Green"], ["air", "Planes"]]
 
 
 func _ready() -> void:
-	var root := VBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.offset_left = 20
-	root.offset_top = 14
-	root.offset_right = -20
-	root.offset_bottom = -14
+	var root := TT.screen_column(self, 20, 14, 20, 14)
 	root.add_theme_constant_override("separation", 10)
-	add_child(root)
 
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 12)
@@ -49,7 +43,7 @@ func _ready() -> void:
 		main.map_family = _default_family()
 	for fam in FAMILIES:
 		var count := _won_in(fam[0])
-		var t := TT.button("%s   %d/5" % [fam[1], count], "plain", 17)
+		var t := TT.button("%s  %d/5" % [fam[1], count], "plain", 16)
 		t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var picked: bool = main.map_family == fam[0]
 		var fill: Color = TT.BRAND if fam[0] == "ground" else (TT.TEAL if fam[0] == "energy" else TT.BLUE)
@@ -93,16 +87,16 @@ func _course_card(i: int) -> Array:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 4)
 	p.add_child(v)
-	var top := HBoxContainer.new()
-	v.add_child(top)
-	var name_label := TT.label("%d  %s" % [i + 1, c["name"]], 20, TT.INK if open else TT.MUTED, true)
-	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top.add_child(name_label)
+	var name_label := TT.label("%d  %s" % [i + 1, c["name"]], 19, TT.INK if open else TT.MUTED, true)
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_label.custom_minimum_size = Vector2(90, 0)
+	v.add_child(name_label)
 	var stars: int = main.save.stars_for(c["id"])
-	top.add_child(TT.label("%s%s" % ["★".repeat(stars), "☆".repeat(3 - stars)], 20, TT.BRAND if stars > 0 else TT.BORDER, true))
+	v.add_child(TT.label("%s%s" % ["★".repeat(stars), "☆".repeat(3 - stars)], 18, TT.BRAND if stars > 0 else TT.BORDER, true))
 	var blurb := TT.label(c["blurb"], 15, TT.MUTED)
 	blurb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	blurb.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	blurb.custom_minimum_size = Vector2(90, 0)
 	v.add_child(blurb)
 	var btn: Button = null
 	if open:
@@ -112,7 +106,10 @@ func _course_card(i: int) -> Array:
 			main.go("garage"))
 		v.add_child(btn)
 	else:
-		v.add_child(TT.label("Win %s to open" % Drivetrain.COURSES[i - 1]["name"], 15, TT.MUTED, true))
+		var need := TT.label(_lock_reason(i), 14, TT.MUTED, true)
+		need.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		need.custom_minimum_size = Vector2(90, 0)
+		v.add_child(need)
 	return [p, btn]
 
 
@@ -130,3 +127,18 @@ func _default_family() -> String:
 		if main.save.course_unlocked(Drivetrain.COURSES, i) and main.save.stars_for(Drivetrain.COURSES[i]["id"]) == 0:
 			return Drivetrain.family_of(i)
 	return "ground"
+
+
+## Why a course is shut, in words a child can act on.
+func _lock_reason(i: int) -> String:
+	var missing: Array = main.save.missing_parts(Drivetrain.COURSES[i]["family"])
+	if not missing.is_empty():
+		return "Find the %s in the Workshop." % " and the ".join(_part_names(missing))
+	return "Win %s to open." % Drivetrain.COURSES[i - 1]["name"]
+
+
+func _part_names(ids: Array) -> Array:
+	var out: Array = []
+	for id in ids:
+		out.append(String(id).replace("_", " "))
+	return out

@@ -15,14 +15,11 @@ var _message: Label
 
 func _ready() -> void:
 	_new_code()
+	var column := TT.screen_column(self, 24, 16, 24, 16)
 	var root := HBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.offset_left = 24
-	root.offset_top = 16
-	root.offset_right = -24
-	root.offset_bottom = -16
+	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_theme_constant_override("separation", 24)
-	add_child(root)
+	column.add_child(root)
 
 	var left := VBoxContainer.new()
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL

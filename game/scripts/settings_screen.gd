@@ -9,24 +9,19 @@ var _confirm_erase := false
 const TOGGLES := [
 	["sfx", "Sound effects"],
 	["music", "Music"],
+	["haptics", "Vibration"],
 	["read_aloud", "Read aloud"],
 	["large_text", "Large text"],
 	["reduced_motion", "Reduced motion"],
-	["pests", "Pests in the workshop"],
-	["walk", "Walk around workshop"],
+	["pests", "Pests"],
+	["walk", "Walk in workshop"],
 ]
 const THEME_NAMES := {"day": "Day", "night": "Night Shift", "hc": "High Contrast"}
 
 
 func _ready() -> void:
-	var root := VBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.offset_left = 20
-	root.offset_top = 12
-	root.offset_right = -20
-	root.offset_bottom = -12
+	var root := TT.screen_column(self, 20, 12, 20, 12)
 	root.add_theme_constant_override("separation", 8)
-	add_child(root)
 
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 12)
@@ -38,7 +33,6 @@ func _ready() -> void:
 	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(title)
 
-	root.add_child(TT.label("Look", 14, TT.MUTED, true))
 	var themes := HBoxContainer.new()
 	themes.add_theme_constant_override("separation", 10)
 	root.add_child(themes)
@@ -48,15 +42,14 @@ func _ready() -> void:
 		b.pressed.connect(func(): _change("theme", key))
 		themes.add_child(b)
 
-	root.add_child(TT.label("Comfort and sound", 14, TT.MUTED, true))
 	var grid := GridContainer.new()
-	grid.columns = 2
+	grid.columns = 3
 	grid.add_theme_constant_override("h_separation", 10)
 	grid.add_theme_constant_override("v_separation", 8)
 	root.add_child(grid)
 	for t in TOGGLES:
 		var on: bool = main.save.settings[t[0]]
-		var b := TT.button("%s: %s" % [t[1], "On" if on else "Off"], "energy" if on else "plain", 17)
+		var b := TT.button("%s: %s" % [t[1], "On" if on else "Off"], "energy" if on else "plain", 15)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.pressed.connect(func(): _change(t[0], not main.save.settings[t[0]]))
 		grid.add_child(b)

@@ -113,36 +113,43 @@ const PUZZLES := [
 
 const CONCEPTS := {
 	"idler": {
+		"ngss": "3-PS2-1",
 		"title": "Idler gears",
 		"body": "Gears that touch turn opposite ways. An extra gear in between, called an idler, flips the direction back.",
 		"formula": "each touching pair flips the direction",
 	},
 	"speed": {
+		"ngss": "3-PS2-2, 4-PS3-1",
 		"title": "Gear speed",
 		"body": "A small gear turned by a big gear spins faster. A big gear turned by a small gear spins slower.",
 		"formula": "speed change = driver teeth ÷ output teeth",
 	},
 	"circuit": {
+		"ngss": "4-PS3-2",
 		"title": "Series and parallel",
 		"body": "In a series circuit the bulbs share one path, so they glow dimly. In a parallel circuit each bulb has its own path, so each glows bright.",
 		"formula": "parallel: every bulb gets the full battery",
 	},
 	"sources": {
+		"ngss": "4-ESS3-1",
 		"title": "Energy sources",
 		"body": "Sunlight powers solar panels. Moving air turns wind blades. Pick the source that matches the weather.",
 		"formula": "no sun, no solar power. no wind, no wind power",
 	},
 	"magnets": {
+		"ngss": "3-PS2-3, 3-PS2-4",
 		"title": "Magnets",
 		"body": "Opposite poles pull together. Matching poles push apart.",
 		"formula": "N pulls S. N pushes N",
 	},
 	"balance": {
+		"ngss": "3-PS2-1",
 		"title": "Balancing a lever",
 		"body": "A lever balances when weight times distance is the same on both sides. A light weight far out can balance a heavy weight close in.",
 		"formula": "weight × distance = weight × distance",
 	},
 	"ratio": {
+		"ngss": "3-5-ETS1-2",
 		"title": "Gear ratio",
 		"body": "Divide the wheel gear's teeth by the motor gear's teeth. A bigger ratio pulls harder but tops out at a lower speed.",
 		"formula": "ratio = wheel teeth ÷ motor teeth",

@@ -8,14 +8,8 @@ var main
 
 
 func _ready() -> void:
-	var root := VBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.offset_left = 20
-	root.offset_top = 12
-	root.offset_right = -20
-	root.offset_bottom = -12
+	var root := TT.screen_column(self, 20, 12, 20, 12)
 	root.add_theme_constant_override("separation", 8)
-	add_child(root)
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 12)
 	root.add_child(head)

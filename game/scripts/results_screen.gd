@@ -59,14 +59,8 @@ func _ready() -> void:
 	var stars := Drivetrain.stars_for(ci, res["time"], res["finished"])
 	main.save.record_stars(Drivetrain.COURSES[ci]["id"], stars)
 
-	var root := VBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.offset_left = 24
-	root.offset_top = 14
-	root.offset_right = -24
-	root.offset_bottom = -14
+	var root := TT.screen_column(self, 24, 14, 24, 14)
 	root.add_theme_constant_override("separation", 10)
-	add_child(root)
 
 	var top := HBoxContainer.new()
 	root.add_child(top)

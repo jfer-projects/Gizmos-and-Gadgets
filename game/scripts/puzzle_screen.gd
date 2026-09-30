@@ -20,14 +20,8 @@ var _busy := false
 
 func _ready() -> void:
 	puzzle = Puzzles.by_id(main.puzzle_id)
-	var root := VBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.offset_left = 16
-	root.offset_top = 12
-	root.offset_right = -16
-	root.offset_bottom = -12
+	var root := TT.screen_column(self, 16, 12, 16, 12)
 	root.add_theme_constant_override("separation", 8)
-	add_child(root)
 
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 12)
@@ -52,14 +46,16 @@ func _ready() -> void:
 	_diagram.puzzle = puzzle
 	_diagram.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_diagram.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_diagram.custom_minimum_size = Vector2(0, 200)
 	_mid = HBoxContainer.new()
 	_mid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_mid.add_theme_constant_override("separation", 10)
 	root.add_child(_mid)
 	_mid.add_child(_diagram)
 
-	var bottom := HBoxContainer.new()
-	bottom.add_theme_constant_override("separation", 10)
+	var bottom := HFlowContainer.new()
+	bottom.add_theme_constant_override("h_separation", 10)
+	bottom.add_theme_constant_override("v_separation", 8)
 	root.add_child(bottom)
 	var pick := TT.label("Pick one", 14, TT.MUTED, true)
 	pick.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -70,9 +66,6 @@ func _ready() -> void:
 		b.pressed.connect(func(): _pick(o))
 		bottom.add_child(b)
 		_option_buttons.append([o, b])
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bottom.add_child(spacer)
 	_try_button = TT.button("Try it", "energy", 22)
 	_try_button.custom_minimum_size = Vector2(150, 56)
 	_try_button.disabled = true

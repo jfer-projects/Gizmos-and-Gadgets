@@ -5,7 +5,7 @@ set -u
 GODOT="${1:-${GODOT:-godot}}"
 cd "$(dirname "$0")/.."
 status=0
-for t in run_tests smoke workshop_test; do
+for t in run_tests smoke workshop_test playthrough; do
   out="$("$GODOT" --headless --path . --script "res://tests/$t.gd" 2>&1)"
   code=$?
   echo "$out" | grep -E "FAIL|passed|Passed|FAILED" | grep -v "^  ok" | tail -5

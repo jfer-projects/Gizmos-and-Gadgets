@@ -66,7 +66,7 @@ func apply_settings() -> void:
 	TT.apply_theme(st["theme"])
 	TT.text_scale = 1.25 if st["large_text"] else 1.0
 	TT.motion = not st["reduced_motion"]
-	audio.set_flags(st["sfx"], st["music"])
+	audio.set_flags(st["sfx"], st["music"], st["haptics"])
 	queue_redraw()
 
 

@@ -8,14 +8,8 @@ var main
 
 
 func _ready() -> void:
-	var root := VBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.offset_left = 20
-	root.offset_top = 14
-	root.offset_right = -20
-	root.offset_bottom = -14
+	var root := TT.screen_column(self, 20, 14, 20, 14)
 	root.add_theme_constant_override("separation", 10)
-	add_child(root)
 
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 12)
@@ -36,7 +30,7 @@ func _ready() -> void:
 	root.add_child(inv)
 
 	var grid := GridContainer.new()
-	grid.columns = 4
+	grid.columns = 3 if TT.text_scale > 1.0 else 4
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 12)
 	grid.add_theme_constant_override("v_separation", 12)

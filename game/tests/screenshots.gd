@@ -40,6 +40,24 @@ func _run() -> void:
 	await _shot("02_map_new")
 	_main.go("workshop")
 	await _shot("03_workshop_new")
+	_main.go("settings")
+	await _shot("03d_settings_day")
+	_main.save.settings["theme"] = "night"
+	_main.save.settings["large_text"] = true
+	_main.apply_settings()
+	_main.go("settings")
+	await _shot("03e_settings_night_large")
+	_main.go("map")
+	await _shot("03f_map_night_large")
+	_main.save.settings["theme"] = "hc"
+	_main.save.settings["large_text"] = false
+	_main.apply_settings()
+	_main.go("gate")
+	await _shot("03g_gate_hc")
+	_main.go("parent")
+	await _shot("03h_parent_hc")
+	_main.save.settings["theme"] = "day"
+	_main.apply_settings()
 	_main.carried = ["idler_cw"]
 	_main.player_pos = Vector2(0.30, 0.72)
 	_main.go("workshop")
@@ -118,4 +136,27 @@ func _run() -> void:
 		_screen()._pick(pick[1])
 		_screen()._try()
 		await _shot(pick[2], 1.9)
+	# large text on the busiest screens
+	_main.save.settings["large_text"] = true
+	_main.apply_settings()
+	_main.course = 3
+	_main.motor_teeth = 8
+	_main.wheel_teeth = 16
+	_main.go("garage")
+	await _shot("40_large_garage")
+	_main.puzzle_id = "wing_balance"
+	_main.go("puzzle")
+	_screen()._pick(4)
+	_screen()._try()
+	await _shot("41_large_puzzle_miss", 2.0)
+	_main.start_race()
+	await get_tree().create_timer(1.0).timeout
+	_main.go("results")
+	await _shot("42_large_results")
+	_main.go("workshop")
+	await _shot("43_large_workshop")
+	_main.go("shelf")
+	await _shot("44_large_shelf")
+	_main.go("codex")
+	await _shot("45_large_codex")
 	get_tree().quit()

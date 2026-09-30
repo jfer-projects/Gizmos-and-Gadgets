@@ -68,14 +68,11 @@ class Gauge extends Control:
 
 
 func _ready() -> void:
+	var column := TT.screen_column(self, 16, 16, 16, 16)
 	var root := HBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.offset_left = 16
-	root.offset_top = 16
-	root.offset_right = -16
-	root.offset_bottom = -16
+	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_theme_constant_override("separation", 16)
-	add_child(root)
+	column.add_child(root)
 
 	var left := VBoxContainer.new()
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -84,6 +81,7 @@ func _ready() -> void:
 	root.add_child(left)
 	_stage = GearStage.new()
 	_stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_stage.custom_minimum_size = Vector2(0, 230)
 	left.add_child(_stage)
 	_hint_label = TT.label("", 16, TT.MUTED)
 	_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

@@ -9,14 +9,8 @@ var main
 
 
 func _ready() -> void:
-	var root := VBoxContainer.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.offset_left = 20
-	root.offset_top = 12
-	root.offset_right = -20
-	root.offset_bottom = -12
+	var root := TT.screen_column(self, 20, 12, 20, 12)
 	root.add_theme_constant_override("separation", 8)
-	add_child(root)
 
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 12)
@@ -55,7 +49,7 @@ func _ready() -> void:
 		col.add_child(_para("Nothing yet. Each crate teaches one idea and shows up here."))
 	for id in learned:
 		var c: Dictionary = Puzzles.CONCEPTS[id]
-		col.add_child(_para("%s: %s" % [c["title"], c["body"]]))
+		col.add_child(_para("%s (NGSS %s): %s" % [c["title"], c["ngss"], c["body"]]))
 
 	col.add_child(TT.label("How the game treats your family", 18, TT.INK, true))
 	col.add_child(_para("No ads. No accounts. No chat. No links out. No purchases in this version. The game collects no personal information and sends nothing over the network. Progress and settings are stored on this device only."))

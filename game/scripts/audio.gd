@@ -8,6 +8,10 @@ const A4 := 440.0
 
 var sfx_on: bool = true
 var music_on: bool = true
+var haptics_on: bool = true
+
+## Short buzz on phones for these sounds, in milliseconds.
+const BUZZ := {"snap": 15, "collect": 40, "success": 60, "win": 90, "pest": 70}
 
 var _players: Array = []
 var _music_player: AudioStreamPlayer
@@ -43,6 +47,8 @@ func _ready() -> void:
 
 
 func sfx(name: String) -> void:
+	if haptics_on and BUZZ.has(name) and OS.has_feature("mobile"):
+		Input.vibrate_handheld(BUZZ[name])
 	if not sfx_on or not _sounds.has(name):
 		return
 	for p in _players:
@@ -58,9 +64,10 @@ func music(name: String) -> void:
 	_apply_music()
 
 
-func set_flags(sfx_enabled: bool, music_enabled: bool) -> void:
+func set_flags(sfx_enabled: bool, music_enabled: bool, haptics_enabled: bool = true) -> void:
 	sfx_on = sfx_enabled
 	music_on = music_enabled
+	haptics_on = haptics_enabled
 	_apply_music()
 
 

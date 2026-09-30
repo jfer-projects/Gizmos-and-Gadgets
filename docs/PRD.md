@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| Status | Draft v0.2 — owner decisions applied (ages 9–11, publish eventually, gear-ratio core) |
+| Status | v0.3 — playable build exists. See `docs/STATUS.md` for what is built, changed or missing against this PRD |
 | Platforms | iOS + Android phones and tablets (Godot 4 recommended) |
 | Audience | Children 9–11 (primary; Apple Kids age band 9–11, NGSS grades 4–5), parents/caregivers and teachers (secondary), nostalgic adults (tertiary) |
 | Date | 2026-09-29 |

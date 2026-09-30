@@ -263,3 +263,24 @@ static func _draw_plane(ci: CanvasItem, origin: Vector2, unit: float, tilt: floa
 	ci.draw_line(hub - blade, hub + blade, INK, 4.0 / unit)
 	ci.draw_circle(hub, 4, BRAND)
 	ci.draw_set_transform_matrix(Transform2D.IDENTITY)
+
+
+## The column every menu-style screen is built in. It fills the screen when the
+## content fits and scrolls up and down when it does not (large text, small
+## phones), so nothing is ever cut off.
+static func screen_column(host: Control, left: int = 20, top: int = 12, right: int = 20, bottom: int = 12) -> VBoxContainer:
+	var sc := ScrollContainer.new()
+	sc.set_anchors_preset(Control.PRESET_FULL_RECT)
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	host.add_child(sc)
+	var m := MarginContainer.new()
+	m.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	m.add_theme_constant_override("margin_left", left)
+	m.add_theme_constant_override("margin_top", top)
+	m.add_theme_constant_override("margin_right", right)
+	m.add_theme_constant_override("margin_bottom", bottom)
+	sc.add_child(m)
+	var v := VBoxContainer.new()
+	v.custom_minimum_size = Vector2(0, host.get_viewport_rect().size.y - top - bottom)
+	m.add_child(v)
+	return v
