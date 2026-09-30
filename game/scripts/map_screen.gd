@@ -29,7 +29,13 @@ func _ready() -> void:
 	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(title)
 	var solved: int = main.save.solved.size()
-	var shop := TT.button("Workshop  %d / %d" % [solved, Puzzles.count()], "energy")
+	var codex := TT.button("Codex", "plain", 16)
+	codex.pressed.connect(func(): main.go_with_back("codex", "map"))
+	head.add_child(codex)
+	var options := TT.button("Settings", "plain", 16)
+	options.pressed.connect(func(): main.go_with_back("settings", "map"))
+	head.add_child(options)
+	var shop := TT.button("Workshop  %d / %d" % [solved, Puzzles.count()], "energy", 16)
 	shop.pressed.connect(func(): main.go("workshop"))
 	head.add_child(shop)
 

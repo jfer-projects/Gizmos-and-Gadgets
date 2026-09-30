@@ -23,7 +23,8 @@ class GearStage extends Control:
 	var _t := 0.0
 
 	func _process(delta: float) -> void:
-		_t += delta
+		if preload("res://scripts/tt.gd").motion:
+			_t += delta
 		queue_redraw()
 
 	func _draw() -> void:
@@ -180,6 +181,7 @@ func _step(gears: Array, prop: String, dir: int) -> void:
 	var i := gears.find(main.get(prop))
 	i = clampi(i + dir, 0, gears.size() - 1)
 	main.set(prop, gears[i])
+	main.audio.sfx("snap")
 	_refresh()
 
 

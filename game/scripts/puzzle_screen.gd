@@ -130,6 +130,10 @@ func _ready() -> void:
 	goal.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	goal_card.add_child(goal)
 	top.add_child(goal_card)
+	var listen := TT.button("Listen", "info", 16)
+	listen.pressed.connect(func(): main.audio.speak(puzzle["goal"]))
+	top.add_child(listen)
+	main.say(puzzle["goal"])
 
 	_diagram = Diagram.new()
 	_diagram.puzzle = puzzle
@@ -210,6 +214,7 @@ func _clear_overlay() -> void:
 
 
 func _show_success() -> void:
+	main.audio.sfx("success")
 	var concept: Dictionary = Puzzles.CONCEPTS[puzzle["concept"]]
 	var reward: Dictionary = puzzle["reward"]
 	var already: bool = main.save.is_solved(puzzle["id"])
@@ -228,6 +233,7 @@ func _show_success() -> void:
 	var collect := TT.button(label, "primary", 20)
 	collect.custom_minimum_size = Vector2(240, 52)
 	collect.pressed.connect(func():
+		main.audio.sfx("collect")
 		main.save.mark_solved(puzzle["id"])
 		main.go("workshop"))
 	row.add_child(collect)
@@ -235,6 +241,8 @@ func _show_success() -> void:
 
 
 func _show_miss() -> void:
+	main.audio.sfx("miss")
+	main.say(Puzzles.describe(puzzle, choice))
 	var v := _overlay_shell(TT.DANGER_TINT, TT.DANGER)
 	v.add_child(TT.label("Not yet", 24, TT.INK, true))
 	var what := TT.label(Puzzles.describe(puzzle, choice), 18, TT.INK)

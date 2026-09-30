@@ -6,6 +6,8 @@ const Drivetrain = preload("res://scripts/drivetrain.gd")
 const Analysis = preload("res://scripts/analysis.gd")
 const Puzzles = preload("res://scripts/puzzles.gd")
 const SaveData = preload("res://scripts/save.gd")
+const TT = preload("res://scripts/tt.gd")
+const Audio = preload("res://scripts/audio.gd")
 
 var failures := 0
 
@@ -27,6 +29,9 @@ func _init() -> void:
 	_test_puzzle_outcomes()
 	_test_save_round_trip()
 	_test_unlocking()
+	_test_audio()
+	_test_settings_round_trip()
+	_test_theme_contrast()
 	print("")
 	if failures == 0:
 		print("All tests passed.")
@@ -209,3 +214,83 @@ func _test_unlocking() -> void:
 	check(s.course_unlocked(Drivetrain.COURSES, 0) and not s.course_unlocked(Drivetrain.COURSES, 1), "only the first course starts open")
 	s.stars["hill"] = 1
 	check(s.course_unlocked(Drivetrain.COURSES, 1) and not s.course_unlocked(Drivetrain.COURSES, 2), "winning a course opens the next one")
+
+
+func _test_audio() -> void:
+	var a := Audio.new()
+	a._ready()
+	for name in ["click", "snap", "collect", "success", "miss", "win", "lose", "pest", "whistle"]:
+		var stream: AudioStreamWAV = a._sounds[name]
+		var peak := Audio.peak_of(stream)
+		check(peak > 0.05 and peak < 1.0, "sound '%s' is audible and not clipping (peak %.2f)" % [name, peak])
+	for name in ["calm", "race"]:
+		var t: AudioStreamWAV = a._tracks[name]
+		check(t.loop_mode == AudioStreamWAV.LOOP_FORWARD and Audio.peak_of(t) > 0.05, "tune '%s' loops and is audible" % name)
+	check(Audio.peak_of(a._sounds["miss"]) < Audio.peak_of(a._sounds["win"]), "the miss sound is softer than the win sound")
+	a.free()
+
+
+func _test_settings_round_trip() -> void:
+	var a := SaveData.new()
+	a.path = "user://test_settings.json"
+	a.settings["theme"] = "night"
+	a.settings["large_text"] = true
+	a.play_seconds = 125.0
+	a.write()
+	var b := SaveData.new()
+	b.path = a.path
+	b.load_from_disk()
+	check(b.settings["theme"] == "night" and b.settings["large_text"] == true, "settings survive a save")
+	check(is_equal_approx(b.play_seconds, 125.0), "play time survives a save")
+	b.reset_progress()
+	check(b.settings["theme"] == "night" and b.play_seconds == 0.0, "erasing progress keeps settings")
+	# a hand-edited bad theme falls back
+	var f := FileAccess.open(a.path, FileAccess.WRITE)
+	f.store_string('{"settings": {"theme": "neon", "music": "loud"}}')
+	f.close()
+	var c := SaveData.new()
+	c.path = a.path
+	c.load_from_disk()
+	check(c.settings["theme"] == "day" and c.settings["music"] == true, "bad settings values fall back to defaults")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(a.path))
+
+
+func _luminance(c: Color) -> float:
+	var f := func(v: float) -> float:
+		return v / 12.92 if v <= 0.03928 else pow((v + 0.055) / 1.055, 2.4)
+	return 0.2126 * f.call(c.r) + 0.7152 * f.call(c.g) + 0.0722 * f.call(c.b)
+
+
+func _contrast(a: Color, b: Color) -> float:
+	var la := _luminance(a)
+	var lb := _luminance(b)
+	return (maxf(la, lb) + 0.05) / (minf(la, lb) + 0.05)
+
+
+func _test_theme_contrast() -> void:
+	for theme in ["day", "night", "hc"]:
+		TT.apply_theme(theme)
+		var floor_text := 7.0 if theme == "hc" else 4.5
+		var pairs := [
+			["INK on SURFACE", TT.INK, TT.SURFACE, floor_text],
+			["INK on RAISED", TT.INK, TT.RAISED, floor_text],
+			["INK on SUNKEN", TT.INK, TT.SUNKEN, floor_text],
+			["MUTED on SURFACE", TT.MUTED, TT.SURFACE, floor_text],
+			["MUTED on RAISED", TT.MUTED, TT.RAISED, floor_text],
+			["MUTED on SUNKEN", TT.MUTED, TT.SUNKEN, floor_text],
+			["ON_BRAND on BRAND", TT.ON_BRAND, TT.BRAND, floor_text],
+			["ON_TEAL on TEAL", TT.ON_TEAL, TT.TEAL, floor_text],
+			["ON_BLUE on BLUE", TT.ON_BLUE, TT.BLUE, floor_text],
+			["ON_DANGER on DANGER", TT.ON_DANGER, TT.DANGER, floor_text],
+			["INK on BRAND_TINT", TT.INK, TT.BRAND_TINT, floor_text],
+			["INK on TEAL_TINT", TT.INK, TT.TEAL_TINT, floor_text],
+			["INK on DANGER_TINT", TT.INK, TT.DANGER_TINT, floor_text],
+			["DANGER on DANGER_TINT", TT.DANGER, TT.DANGER_TINT, floor_text],
+			["TEAL on TEAL_TINT", TT.TEAL, TT.TEAL_TINT, floor_text],
+			["BORDER on SURFACE", TT.BORDER, TT.SURFACE, 3.0],
+			["BORDER on RAISED", TT.BORDER, TT.RAISED, 3.0],
+		]
+		for p in pairs:
+			var ratio := _contrast(p[1], p[2])
+			check(ratio >= p[3], "%s: %s is %.1f:1 (needs %.1f)" % [theme, p[0], ratio, p[3]])
+	TT.apply_theme("day")

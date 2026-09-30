@@ -11,6 +11,20 @@ var solved: Array = []       # puzzle ids
 var stars: Dictionary = {}   # course id -> best stars (0 to 3)
 var last_motor: int = 16
 var last_wheel: int = 16
+var play_seconds: float = 0.0
+var settings: Dictionary = default_settings()
+
+
+static func default_settings() -> Dictionary:
+	return {
+		"theme": "day",         # day, night, hc
+		"sfx": true,
+		"music": true,
+		"read_aloud": false,
+		"large_text": false,
+		"reduced_motion": false,
+		"pests": true,
+	}
 
 
 func owned(kind: String) -> Array:
@@ -52,7 +66,7 @@ func write() -> void:
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	if f == null:
 		return  # read-only storage: play on without saving
-	f.store_string(JSON.stringify({"solved": solved, "stars": stars, "motor": last_motor, "wheel": last_wheel}))
+	f.store_string(JSON.stringify({"solved": solved, "stars": stars, "motor": last_motor, "wheel": last_wheel, "play_seconds": play_seconds, "settings": settings}))
 
 
 func load_from_disk() -> void:
@@ -73,9 +87,28 @@ func load_from_disk() -> void:
 	if typeof(s) == TYPE_DICTIONARY:
 		for k in s:
 			stars[str(k)] = clampi(int(s[k]), 0, 3)
+	play_seconds = maxf(0.0, float(data.get("play_seconds", 0.0)))
+	var st = data.get("settings", {})
+	if typeof(st) == TYPE_DICTIONARY:
+		var defaults := default_settings()
+		for k in defaults:
+			if st.has(k) and typeof(st[k]) == typeof(defaults[k]):
+				settings[k] = st[k]
+		if not ["day", "night", "hc"].has(settings["theme"]):
+			settings["theme"] = "day"
 	last_motor = int(data.get("motor", 16))
 	last_wheel = int(data.get("wheel", 16))
 	if not owned("motor").has(last_motor):
 		last_motor = 16
 	if not owned("wheel").has(last_wheel):
 		last_wheel = 16
+
+
+## Wipe progress but keep the player's settings.
+func reset_progress() -> void:
+	solved = []
+	stars = {}
+	last_motor = 16
+	last_wheel = 16
+	play_seconds = 0.0
+	write()

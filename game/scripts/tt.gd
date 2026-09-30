@@ -2,28 +2,97 @@ extends RefCounted
 ## Tinker Track look: colours from the design system (Day theme) plus
 ## small helpers for styled controls and for drawing gears and the car.
 ## Keep in step with docs/design-system/tokens.json.
+##
+## Colours are variables so the player can switch between the Day, Night Shift
+## and High Contrast themes (see apply_theme). Screens are rebuilt when they
+## open, so a theme change shows on the next screen.
 
-const SURFACE := Color("#EAF1EF")
-const RAISED := Color("#FFFFFF")
-const SUNKEN := Color("#DCE7E3")
-const GRID := Color("#C6D6D0")
-const INK := Color("#10243E")
-const MUTED := Color("#45586F")
-const BORDER := Color("#5F7389")
-const BRAND := Color("#F5B700")
-const ON_BRAND := Color("#10243E")
-const TEAL := Color("#096A70")
-const ON_TEAL := Color("#FFFFFF")
-const BLUE := Color("#2B62C9")
-const ON_BLUE := Color("#FFFFFF")
-const DANGER := Color("#A83208")
-const ON_DANGER := Color("#FFFFFF")
-const BRAND_TINT := Color("#FFF1C2")
-const TEAL_TINT := Color("#D2EFEF")
-const BLUE_TINT := Color("#DCE7FB")
-const DANGER_TINT := Color("#FBDCCB")
+static var SURFACE: Color = Color("#EAF1EF")
+static var RAISED: Color = Color("#FFFFFF")
+static var SUNKEN: Color = Color("#DCE7E3")
+static var GRID: Color = Color("#C6D6D0")
+static var INK: Color = Color("#10243E")
+static var MUTED: Color = Color("#45586F")
+static var BORDER: Color = Color("#5F7389")
+static var BRAND: Color = Color("#F5B700")
+static var ON_BRAND: Color = Color("#10243E")
+static var TEAL: Color = Color("#096A70")
+static var ON_TEAL: Color = Color("#FFFFFF")
+static var BLUE: Color = Color("#2B62C9")
+static var ON_BLUE: Color = Color("#FFFFFF")
+static var DANGER: Color = Color("#A83208")
+static var ON_DANGER: Color = Color("#FFFFFF")
+static var BRAND_TINT: Color = Color("#FFF1C2")
+static var TEAL_TINT: Color = Color("#D2EFEF")
+static var BLUE_TINT: Color = Color("#DCE7FB")
+static var DANGER_TINT: Color = Color("#FBDCCB")
+
+static var SHADOW: Color = Color("#10243E")
+static var text_scale: float = 1.0
+static var motion: bool = true  # false = reduced motion: no idle spinning or confetti
+static var theme_name: String = "day"
+
+const THEMES := {
+	"day": {
+		"SURFACE": "#EAF1EF", "RAISED": "#FFFFFF", "SUNKEN": "#DCE7E3", "GRID": "#C6D6D0",
+		"INK": "#10243E", "MUTED": "#45586F", "BORDER": "#5F7389",
+		"BRAND": "#F5B700", "ON_BRAND": "#10243E", "TEAL": "#096A70", "ON_TEAL": "#FFFFFF",
+		"BLUE": "#2B62C9", "ON_BLUE": "#FFFFFF", "DANGER": "#A83208", "ON_DANGER": "#FFFFFF",
+		"BRAND_TINT": "#FFF1C2", "TEAL_TINT": "#D2EFEF", "BLUE_TINT": "#DCE7FB", "DANGER_TINT": "#FBDCCB",
+		"SHADOW": "#10243E",
+	},
+	"night": {
+		"SURFACE": "#0E1B2C", "RAISED": "#16283E", "SUNKEN": "#0A1523", "GRID": "#24405E",
+		"INK": "#EAF1EF", "MUTED": "#A9BACB", "BORDER": "#7F93A8",
+		"BRAND": "#FFC933", "ON_BRAND": "#10243E", "TEAL": "#3CC7CC", "ON_TEAL": "#0E1B2C",
+		"BLUE": "#7AA5FF", "ON_BLUE": "#0E1B2C", "DANGER": "#FF8A5B", "ON_DANGER": "#0E1B2C",
+		"BRAND_TINT": "#3B3411", "TEAL_TINT": "#113A3E", "BLUE_TINT": "#1B2F55", "DANGER_TINT": "#4A2415",
+		"SHADOW": "#050C15",
+	},
+	"hc": {
+		"SURFACE": "#FFFFFF", "RAISED": "#FFFFFF", "SUNKEN": "#F0F0F0", "GRID": "#D8D8D8",
+		"INK": "#000000", "MUTED": "#1A1A1A", "BORDER": "#000000",
+		"BRAND": "#FFC800", "ON_BRAND": "#000000", "TEAL": "#005A5F", "ON_TEAL": "#FFFFFF",
+		"BLUE": "#1A44A0", "ON_BLUE": "#FFFFFF", "DANGER": "#8F2A00", "ON_DANGER": "#FFFFFF",
+		"BRAND_TINT": "#FFFFFF", "TEAL_TINT": "#FFFFFF", "BLUE_TINT": "#FFFFFF", "DANGER_TINT": "#FFFFFF",
+		"SHADOW": "#000000",
+	},
+}
 
 static var _bold: FontVariation
+
+
+## Switch the whole palette. Unknown names fall back to Day.
+static func apply_theme(name: String) -> void:
+	if not THEMES.has(name):
+		name = "day"
+	theme_name = name
+	var t: Dictionary = THEMES[name]
+	SURFACE = Color(t["SURFACE"])
+	RAISED = Color(t["RAISED"])
+	SUNKEN = Color(t["SUNKEN"])
+	GRID = Color(t["GRID"])
+	INK = Color(t["INK"])
+	MUTED = Color(t["MUTED"])
+	BORDER = Color(t["BORDER"])
+	BRAND = Color(t["BRAND"])
+	ON_BRAND = Color(t["ON_BRAND"])
+	TEAL = Color(t["TEAL"])
+	ON_TEAL = Color(t["ON_TEAL"])
+	BLUE = Color(t["BLUE"])
+	ON_BLUE = Color(t["ON_BLUE"])
+	DANGER = Color(t["DANGER"])
+	ON_DANGER = Color(t["ON_DANGER"])
+	BRAND_TINT = Color(t["BRAND_TINT"])
+	TEAL_TINT = Color(t["TEAL_TINT"])
+	BLUE_TINT = Color(t["BLUE_TINT"])
+	DANGER_TINT = Color(t["DANGER_TINT"])
+	SHADOW = Color(t["SHADOW"])
+
+
+## Font size after the player's text-size setting.
+static func fs(size: int) -> int:
+	return int(round(float(size) * text_scale))
 
 
 static func bold_font() -> Font:
@@ -54,7 +123,7 @@ static func box(fill: Color, border: Color = INK, radius: int = 12, border_w: in
 static func label(text: String, size: int = 18, color: Color = INK, is_bold: bool = false) -> Label:
 	var l := Label.new()
 	l.text = text
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", fs(size))
 	l.add_theme_color_override("font_color", color)
 	if is_bold:
 		l.add_theme_font_override("font", bold_font())
@@ -67,7 +136,7 @@ static func button(text: String, kind: String = "plain", size: int = 18) -> Butt
 	b.text = text
 	b.custom_minimum_size = Vector2(48, 48)
 	b.focus_mode = Control.FOCUS_ALL
-	b.add_theme_font_size_override("font_size", size)
+	b.add_theme_font_size_override("font_size", fs(size))
 	b.add_theme_font_override("font", bold_font())
 	var fill := RAISED
 	var fg := INK

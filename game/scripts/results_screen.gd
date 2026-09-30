@@ -55,6 +55,7 @@ func _ready() -> void:
 	var rival: Dictionary = Drivetrain.rival_result(ci)
 	var won: bool = res["finished"] and res["time"] <= rival["time"]
 	var notes: Array = Analysis.explain(res)
+	main.audio.sfx("win" if won else "lose")
 	var stars := Drivetrain.stars_for(ci, res["time"], res["finished"])
 	main.save.record_stars(Drivetrain.COURSES[ci]["id"], stars)
 
@@ -142,6 +143,7 @@ func _note_card(n: Dictionary) -> Control:
 	p.add_child(v)
 	v.add_child(TT.label("%s · %s" % [Analysis.format_time(n["time"]), n["place"]], 14, TT.DANGER, true))
 	v.add_child(TT.label(n["title"], 22, TT.INK, true))
+	main.say("%s. %s" % [n["title"], n["body"]])
 	var body := TT.label(n["body"], 16, TT.INK)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL

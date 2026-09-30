@@ -26,10 +26,20 @@ func _ready() -> void:
 	play.pressed.connect(func(): main.go("map"))
 	box.add_child(play)
 	play.grab_focus()
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	box.add_child(row)
+	var settings := TT.button("Settings", "ghost")
+	settings.pressed.connect(func(): main.go_with_back("settings", "title"))
+	row.add_child(settings)
+	var parent := TT.button("Parent zone", "ghost")
+	parent.pressed.connect(func(): main.go("gate"))
+	row.add_child(parent)
 
 
 func _process(delta: float) -> void:
-	_t += delta
+	if TT.motion:
+		_t += delta
 	queue_redraw()
 
 
